@@ -123,7 +123,6 @@ class Hexagon(MapObject):
         pass
 
     def draw(self):
-        print("draw a hex")
 
         pygame.draw.polygon(self.image, self.color, self.points_storage.points)
         for idx, river in enumerate(self.rivers):

@@ -8,6 +8,7 @@ class TextInputHandler:
         self.waiting_for_update = True
 
     def update(self, element):
+        print("Updating text input handler")
         if element == -1 and self.waiting_for_update:
             self.remove_active_element()
         else:

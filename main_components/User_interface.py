@@ -59,7 +59,7 @@ class UI:
         self.draw_elements()
 
     def hide_lvl_2_elements(self):
-        for element in self.lvl_2_elements:
+        for element in self.elements[1]:
             element.hide()
         self.draw_elements()
 
@@ -129,9 +129,10 @@ class UI:
 
     def subscribe_text_elements(self, observer, ):
 
-        for element in self.lvl_2_elements:
-            if isinstance(element, TextObservable):
-                element.add_observer(observer)
+        for layer in self.elements:
+            for element in self.elements[layer]:
+                if isinstance(element, TextObservable):
+                    element.add_observer(observer)
 
     def check_click(self, mouse_pos: tuple[int, int]) -> bool:
         for layer in reversed(self.elements.values()):
