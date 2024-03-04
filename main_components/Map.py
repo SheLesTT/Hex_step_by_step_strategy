@@ -27,8 +27,8 @@ class Map:
         self.hex_width = 30 * sqrt(3)
         # self.hexes   = self.create_tiles()
 
-        # self.hexes = self.load_from_json("json_save")
-        self.hexes = self.create_empty_map()
+        self.hexes = self.load_from_json("json_save")
+        # self.hexes = self.create_empty_map()
         self.find_neighbours()
         self.Spawner = Spawner(self)
         # self.create_mines()
@@ -54,16 +54,17 @@ class Map:
                             while not prev_hex.building_on_hex:
                                 count += 1
                                 prev_hex = self.hexes[previous[prev_hex.grid_pos[0]][prev_hex.grid_pos[1]]]
-                            graph[prev_hex.grid_pos].append((cur_hex.grid_pos, count))
-                            graph[cur_hex.grid_pos].append((prev_hex.grid_pos, count))
+                            graph[prev_hex.building_on_hex].append((cur_hex.building_on_hex, count))
+                            graph[cur_hex.building_on_hex].append((prev_hex.building_on_hex, count))
 
-                    for neighbour in cur_hex.get_neighbours():
+                    for neighbour in cur_hex.neighbours:
                         if neighbour.is_road_on_hex() and not visited[neighbour.grid_pos[0]][neighbour.grid_pos[1]]:
                             visited[neighbour.grid_pos[0]][neighbour.grid_pos[1]] = True
                             previous[neighbour.grid_pos[0]][neighbour.grid_pos[1]] = cur_hex.grid_pos
                             queue.append(neighbour)
 
         print(graph)
+        return graph
 
     def load_from_json(self, name: str) -> HexesGroup:
         hexes = HexesGroup()
@@ -74,7 +75,7 @@ class Map:
         for grid_pos, hex_params in hexes_json.items():
             grid_pos = OffsetCoordinates(*list(map(int, grid_pos[1:-1].split(","))))
 
-            hex_created = self.create_hex(hex_params["type"], grid_pos)
+            hex_created = self.create_hex(hex_params, grid_pos)
             hex_created.draw()
             hexes.add(hex_created)
         return hexes
@@ -86,7 +87,7 @@ class Map:
             grid_pos, d = hex.save_to_json()
             map_dict[grid_pos] = d
         with open(file_name, "w") as f:
-            json.dump(map_dict, f)
+            json.dump(map_dict, f, sort_keys=True, indent=4)
 
     def create_hex(self, type: str, grid_pos: OffsetCoordinates) -> Hexagon:
         hex_created = self.hexes_factory.create_hex(type, grid_pos)

@@ -75,7 +75,7 @@ class Hexagon(MapObject):
         self.directions = {0: pygame.Vector3(1, 0, -1), 1: pygame.Vector3(0, 1, -1), 2: pygame.Vector3(-1, 1, 0),
                            3: pygame.Vector3(-1, 0, 1), 4: pygame.Vector3(0, -1, 1), 5: pygame.Vector3(1, -1, -0)}
 
-        self.neighbours = None
+        self.neighbours = [None] * 6
         self.unit_on_hex = None
         self.building_on_hex = None
 
@@ -95,12 +95,14 @@ class Hexagon(MapObject):
         hex_dict["roads"] = self.roads
         hex_dict["rivers"] = self.rivers
 
-        return str(self.grid_pos), hex_dict
+        return str((self.grid_pos.row, self.grid_pos.column)), hex_dict
 
     def __repr__(self):
         return f"{self.__class__.__name__}, {self.unit_on_hex}, {self.building_on_hex}"
 
 
+    def add_building(self, building):
+        self.building_on_hex = building
 
     def add_unit(self, unit):
         self.unit_on_hex = unit
@@ -121,6 +123,7 @@ class Hexagon(MapObject):
         pass
 
     def draw(self):
+        print("draw a hex")
 
         pygame.draw.polygon(self.image, self.color, self.points_storage.points)
         for idx, river in enumerate(self.rivers):
@@ -153,9 +156,15 @@ class Hexagon(MapObject):
 
     def discover_rivers_to_draw(self, triangle):
         self.add_a_river(triangle)
-        neigbour_hex = self.neighbours[triangle]
-        new_triangle = (triangle + 3) % 6
-        neigbour_hex.add_a_river(new_triangle)
+        try:
+            neigbour_hex = self.neighbours[triangle]
+
+            new_triangle = (triangle + 3) % 6
+            neigbour_hex.add_a_river(new_triangle)
+        except IndexError as e:
+            print("Invalid triangle number", triangle)
+
+
 
     def add_a_river(self, triangle):
         try:

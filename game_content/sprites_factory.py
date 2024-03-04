@@ -147,15 +147,18 @@ class HexesFactory():
                 pass
 
     def replace_hex(self, hex_type: str, grid_pos: OffsetCoordinates, old_hex: Hexagon) -> Hexagon:
+        print("Old hex", old_hex, "Building on hex", old_hex.building_on_hex)
         hex_created = self.create_hex(hex_type, grid_pos)
         hex_created.rivers = old_hex.rivers
         hex_created.roads = old_hex.roads
-        hex_created.building_on_hex = old_hex.building_on_hex
+        hex_created.add_building(old_hex.building_on_hex)
         hex_created.neighbours = old_hex.neighbours
         for direction, neighbour in enumerate(hex_created.neighbours):
             reversed_direction =  (direction+ 3) % 6
-            neighbour.neighbours[reversed_direction] = hex_created
-            neighbour.building_on_hex = old_hex.building_on_hex
+            try:
+                neighbour.neighbours[reversed_direction] = hex_created
+            except IndexError:
+                print("Error","Direction number  was", reversed_direction)
         hex_created.draw()
         return hex_created
 

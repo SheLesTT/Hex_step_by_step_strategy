@@ -6,8 +6,9 @@ import logging
 import json
 
 from main_components.Map import Map
-from main_components.MouseClickHandler import MouseClickHandler
+from main_components.MapEditorMouseClickHandler import MapEditorMouseClickHandler
 from main_components.Render import Render
+from main_components.SimulationUI import SimUI
 from main_components.TextInputHandler import TextInputHandler
 from main_components.User_interface import UI
 from main_components.mapMovement import MapMovementTracker
@@ -15,6 +16,7 @@ from player_actions.UI_Elements import *
 from player_actions.MoveParser import Parser
 from player_actions.Spawner import Spawner
 from player_actions.mover import Mover
+from main_components.SimulationMouseClickHandler import SimulationMouseClickHandler
 from collections import deque
 from main_components.game import OnlineGame
 
@@ -42,8 +44,19 @@ class MapEditor:
         self.tracker = MapMovementTracker(internal_surface_size, window_size, )
         self.renderer = Render(internal_surface_size, map_movement_tracker=self.tracker,
                                user_interface=self.user_interface)
-        self.click_handler = MouseClickHandler(self.game_map, self.user_interface, self.tracker, self.mover)
+        self.click_handler = MapEditorMouseClickHandler(self.game_map, self.user_interface, self.tracker, self.mover)
         self.text_input_handler = TextInputHandler(self.user_interface)
+
+    def set_user_interface(self, UI):
+        self.user_interface = UI
+
+        self.tracker = MapMovementTracker(internal_surface_size, window_size, )
+        self.renderer = Render(internal_surface_size, map_movement_tracker=self.tracker,
+                               user_interface=self.user_interface)
+        self.click_handler = SimulationMouseClickHandler(self.game_map, self.user_interface, self.tracker, self.mover)
+        self.text_input_handler = TextInputHandler(self.user_interface)
+
+
 
 # creating main game classes
 
@@ -81,7 +94,10 @@ def map_editor():
 def offline_game():
 
     map_editor = MapEditor(window_size, internal_surface_size, 0)
-    map_editor.user_interface.subscribe_text_elements(map_editor.text_input_handler)
+    user_interface = SimUI(window_size, map_editor.game_map, map_editor.spawner)
+    map_editor.set_user_interface(user_interface)
+
+    # map_editor.user_interface.subscribe_text_elements(map_editor.text_input_handler)
 
     run = True
     while run:
