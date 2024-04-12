@@ -101,11 +101,10 @@ class Hexagon(MapObject):
         return str((self.grid_pos.row, self.grid_pos.column)), hex_dict
 
     def __repr__(self):
-        return f"{self.__class__.__name__}, {self.unit_on_hex}, {self.building_on_hex}"
+        return f"{self.__class__.__name__}"
 
 
-    def add_building(self, building):
-        self.building_on_hex = building
+
 
     def add_unit(self, unit):
         self.unit_on_hex = unit
@@ -126,7 +125,6 @@ class Hexagon(MapObject):
         pass
 
     def draw(self):
-
         pygame.draw.polygon(self.image, self.color, self.points_storage.points)
         for idx, river in enumerate(self.rivers):
             if river:
@@ -144,11 +142,11 @@ class Hexagon(MapObject):
 
     def draw_a_road(self, triangle_number):
 
-        if triangle_number == 6:
-            pygame.draw.circle(self.image, (0, 30, 170), self.points_storage.get_points_for_road(triangle_number), 5)
-        else:
-            self.roads[6] = False
+        if triangle_number != 6:
             pygame.draw.polygon(self.image, (0, 30, 170), self.points_storage.get_points_for_road(triangle_number))
+        elif triangle_number ==6 and not any(self.roads[:6]):
+
+            pygame.draw.circle(self.image, (0, 30, 170), self.points_storage.get_points_for_road(triangle_number), 5)
 
 
 
@@ -156,13 +154,17 @@ class Hexagon(MapObject):
         self.building_on_hex = building
         self.draw()
 
+    def remove_building(self, building):
+        self.building_on_hex = None
+        self.draw()
+
     def discover_rivers_to_draw(self, triangle):
         self.add_a_river(triangle)
         try:
             neigbour_hex = self.neighbours[triangle]
 
-            new_triangle = (triangle + 3) % 6
-            neigbour_hex.add_a_river(new_triangle)
+            opposite_triangle = (triangle + 3) % 6
+            neigbour_hex.add_a_river(opposite_triangle)
         except IndexError as e:
             print("Invalid triangle number", triangle)
 
@@ -175,6 +177,12 @@ class Hexagon(MapObject):
             raise InvalidTriangleError()
         self.draw()
 
+    def remove_river(self,triangle):
+        self.rivers[triangle] = False
+        self.draw()
+        opposite_triangle = (triangle + 3) % 6
+        if self.neighbours[triangle].rivers[opposite_triangle]:
+            self.neighbours[triangle].remove_river(opposite_triangle)
 
     def discover_what_roads_to_draw(self, ):
         for direction, neighbour in enumerate(self.neighbours):
@@ -191,13 +199,29 @@ class Hexagon(MapObject):
         except IndexError as e:
             raise InvalidTriangleError()
 
+    def del_road(self, triangle):
+        self.roads[triangle] = False
+
+    def remove_road(self):
+        for direction, neighbour in enumerate(self.neighbours):
+            if self.roads[direction]:
+                self.del_road(direction)
+                opposite_triangle = (direction + 3) % 6
+                print("ROads in a neigbour ", self.neighbours[direction])
+                self.neighbours[direction].del_road(opposite_triangle)
+                self.neighbours[direction].draw()
+        self.del_road(6)
+        self.draw()
+
+
+
 
 
 class HexagonLand(Hexagon):
     def __init__(self, grid_pos, game_map, color=(30, 70, 50), width=hex_width, height=hex_height):
         super().__init__(grid_pos, game_map, color, width=hex_width, height=hex_height)
         self.color = color
-        self.type = "land Hexagon"
+        self.type = "HexagonLand"
         self.draw()
 
 
@@ -205,7 +229,7 @@ class HexagonMountain(Hexagon):
     def __init__(self, grid_pos, game_map, color=(255, 255, 255), width=hex_width, height=hex_height):
         super().__init__(grid_pos, game_map, color, width=hex_width, height=hex_height)
         self.color = color
-        self.type = "mountain Hexagon"
+        self.type = "HexagonMountain"
         self.draw()
 
 
@@ -213,7 +237,7 @@ class HexagonSea(Hexagon):
     def __init__(self, grid_pos, game_map, color=(83, 236, 236), width=hex_width, height=hex_height):
         super().__init__(grid_pos, game_map, color, width=hex_width, height=hex_height)
         self.color = color
-        self.type = "sea Hexagon"
+        self.type = "HexagonSea"
         self.draw()
 
 
@@ -221,7 +245,7 @@ class HexagonEmpty(Hexagon):
     def __init__(self, grid_pos, game_map, color=(0, 0, 0), width=hex_width, height=hex_height):
         super().__init__(grid_pos, game_map, color, width=hex_width, height=hex_height)
         self.color = color
-        self.type = "empty Hexagon"
+        self.type = "HexagonEmpty"
         self.draw()
 
 

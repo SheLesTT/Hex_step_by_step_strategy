@@ -91,8 +91,8 @@ class Map:
         hex_created = self.hexes_factory.create_hex(type, grid_pos)
         return hex_created
 
-    def set_hex(self, hexagon, grid_pos):
-        self.hexes[grid_pos] = hexagon
+    def set_hex(self, hexagon):
+        self.hexes[hexagon.grid_pos] = hexagon
 
     def change_hex(self, hex_type: str, grid_pos: OffsetCoordinates) -> None:
         old_hex = self.hexes[grid_pos]

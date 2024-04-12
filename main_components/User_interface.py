@@ -95,7 +95,7 @@ class UI:
 
     def add_hexes_list(self):
         button_list = ButtonList(position=(200, 0))
-        hexes_types = ["Hexagon_land", "Hexagon_mountain", "HexagonSea", "HexagonEmpty"]
+        hexes_types = ["HexagonLand", "HexagonMountain", "HexagonSea", "HexagonEmpty"]
         [button_list.add_element(hex_type, hex_type) for hex_type in hexes_types]
         self.elements[0].append(button_list)
         self.button_lists["hex_types"] = button_list

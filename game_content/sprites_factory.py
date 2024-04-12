@@ -108,11 +108,11 @@ class HexesFactory():
             hex_type = hex_params
         hex_created = None
         match hex_type:
-            case "Hexagon_land":
+            case "HexagonLand":
                 hex_created = (HexagonLand(grid_pos, self.storage))
             case "HexagonSea":
                 hex_created = (HexagonSea(grid_pos, self.storage))
-            case "Hexagon_mountain":
+            case "HexagonMountain":
                 hex_created = (HexagonMountain(grid_pos, self.storage))
             case "HexagonEmpty":
                 hex_created = (HexagonEmpty(grid_pos, self.storage))
