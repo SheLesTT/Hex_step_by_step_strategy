@@ -83,9 +83,15 @@ class MenuButton(Button):
     def check_click(self, pos: tuple[int, int]):
 
         if  self.absolute_rect.collidepoint(pos):
+                print("Button was clicked ", self.action, pos,self.absolute_rect)
                 self.action(*self.action_args)
-                return self
+                return True
         return False
+
+    def add_action(self, action, action_args = ()):
+        self.action = action
+        self.action_args = action_args
+        print("Action afeter add", self.action)
     def move_button(self, offset):
         self.y_offset += offset
         self.abs_y += offset

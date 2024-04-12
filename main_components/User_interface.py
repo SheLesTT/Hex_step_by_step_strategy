@@ -10,11 +10,10 @@ font = pygame.font.SysFont("Arial", font_size)
 
 
 class UI:
-    def __init__(self, window_size, game_map, spawner):
+    def __init__(self, window_size, game_map,):
         self.window_size = window_size
         self.UI_surface = None
         self.game_map = game_map
-        self.spawner = spawner
         self.elements = defaultdict(list)
         self.lvl_1_elements = []
         self.lvl_2_elements = []
@@ -31,6 +30,8 @@ class UI:
         elements[0] = []
         elements[1] = []
         return elements
+
+
 
     def add_layer (self, element):
        next_layer = list( self.elements.keys())[-1]
@@ -83,7 +84,6 @@ class UI:
                     element.draw(self.UI_surface)
 
     def add_surface(self):
-        print("Calling add surface")
         surface = UiSurface(size=(300, 800), position=(500, 0), visible=False)
         surface.name = "city_surface"
         self.elements[1].append(surface)
@@ -109,22 +109,20 @@ class UI:
 
     def add_buttons(self, ):
 
-        titles = ["Triangular", "Square", "Circle"]
         display_size = pygame.display.get_surface().get_size()
         button_size = (100, 100)
-        for i in range(len(titles)):
-            button = MenuButton(titles[i], display_size[0] - 100, display_size[1] - 100 - 100 * i, button_size,
-                                action=self.hide_element, )
-            self.elements[0].append(button)
-        finish_move = MenuButton("Create graph", display_size[0] - 100, display_size[1] - 100 - 100 * len(titles),
+        self.undo_button = MenuButton("Undo", 700, 700, button_size,)
+        self.finish_move = MenuButton("Create graph", display_size[0] - 100, display_size[1] - 100 - 100 * 3,
                                  button_dimensions=button_size, action=self.game_map.create_graph, color=(255, 0, 0),
                                  font_size=24, font_name="Arial")
 
-        load_to_json = MenuButton("Save Game", display_size[0] - 100, display_size[1] - 100 - 100 * 4,
+        self.load_to_json = MenuButton("Save Game", display_size[0] - 100, display_size[1] - 100 - 100 * 4,
                                   button_dimensions=button_size, action=self.save_game, color=(255, 0, 0),
                                   font_size=24, font_name="Arial")
-        self.elements[0].append(finish_move)
-        self.elements[0].append(load_to_json)
+
+        self.elements[0].append(self.undo_button)
+        self.elements[0].append(self.finish_move)
+        self.elements[0].append(self.load_to_json)
         print(self.elements)
 
     def subscribe_text_elements(self, observer, ):

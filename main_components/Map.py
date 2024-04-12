@@ -9,7 +9,6 @@ from game_content.Groups import HexesGroup
 from game_content.Sprites import Hexagon, HexagonMountain, HexagonSea, HexagonLand, Town, HexagonEmpty, \
     OffsetCoordinates
 from game_content.sprites_factory import HexesFactory
-from player_actions.Spawner import Spawner
 from noise.Noise import Noise
 import random
 
@@ -30,7 +29,6 @@ class Map:
         self.hexes = self.load_from_json("json_save")
         # self.hexes = self.create_empty_map()
         self.find_neighbours()
-        self.Spawner = Spawner(self)
         # self.create_mines()
 
         # self.spawner = Spawner(self)
@@ -92,6 +90,9 @@ class Map:
     def create_hex(self, type: str, grid_pos: OffsetCoordinates) -> Hexagon:
         hex_created = self.hexes_factory.create_hex(type, grid_pos)
         return hex_created
+
+    def set_hex(self, hexagon, grid_pos):
+        self.hexes[grid_pos] = hexagon
 
     def change_hex(self, hex_type: str, grid_pos: OffsetCoordinates) -> None:
         old_hex = self.hexes[grid_pos]

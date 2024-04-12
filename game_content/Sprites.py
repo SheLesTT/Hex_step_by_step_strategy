@@ -58,6 +58,7 @@ class MapObject(pygame.sprite.Sprite):
 
 class Hexagon(MapObject):
     def __init__(self, grid_pos, points_storage, color=(30, 70, 50), width=hex_width, height=hex_height):
+
         super().__init__(grid_pos)
         self.grid_pos = grid_pos
         self.points_storage = points_storage
@@ -78,6 +79,8 @@ class Hexagon(MapObject):
         self.neighbours = [None] * 6
         self.unit_on_hex = None
         self.building_on_hex = None
+
+
 
     def is_road_on_hex(self):
         return any(self.roads)

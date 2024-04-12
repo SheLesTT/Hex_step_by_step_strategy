@@ -14,7 +14,6 @@ from main_components.User_interface import UI
 from main_components.mapMovement import MapMovementTracker
 from player_actions.UI_Elements import *
 from player_actions.MoveParser import Parser
-from player_actions.Spawner import Spawner
 from player_actions.mover import Mover
 from main_components.SimulationMouseClickHandler import SimulationMouseClickHandler
 from collections import deque
@@ -38,13 +37,12 @@ class MapEditor:
     def __init__(self, window_size, internal_surface_size, id):
         self.game_map = Map(10, 10, id, 10, 3, True)
         self.mover = Mover(self.game_map)
-        self.spawner = Spawner(self.game_map, )
-        self.move_parser = Parser(self.mover, self.spawner, )
-        self.user_interface = UI(window_size, self.game_map, self.spawner)
         self.tracker = MapMovementTracker(internal_surface_size, window_size, )
+
+        self.user_interface = UI(window_size, self.game_map,)
+        self.click_handler = MapEditorMouseClickHandler(self.game_map, self.user_interface, self.tracker, self.mover)
         self.renderer = Render(internal_surface_size, map_movement_tracker=self.tracker,
                                user_interface=self.user_interface)
-        self.click_handler = MapEditorMouseClickHandler(self.game_map, self.user_interface, self.tracker, self.mover)
         self.text_input_handler = TextInputHandler(self.user_interface)
 
     def set_user_interface(self, UI):
@@ -146,7 +144,6 @@ def choose_game(testing: bool = False):
     is_run = True
 
     def enter_room(game_list, network: Network):
-        print("tried to enter room")
         game_id = game_list.selected_element.id
         network.send(json.dumps({"enter_room": {"game_id": game_id}}))
         online_game(network)
@@ -231,7 +228,6 @@ def game_menu(testing):
                 if event.type == QUIT:
                     running = False
                 elif event.type == MOUSEBUTTONDOWN:
-                    print("here")
                     pos = event.dict["pos"]
                     [button.check_click(pos) for button in buttons]
 

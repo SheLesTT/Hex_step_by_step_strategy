@@ -28,9 +28,10 @@ class MapMovementTracker(pygame.sprite.Group):
         self.internal_offset.y = self.internal_surface_size[1] // 2 - self.display_surface_half_height
 
         self.offset_borders = {"left": -self.internal_offset.x,
-                          "right": self.internal_surface_size[0] - self.display_surface_size[0],
-                          "top": self.internal_surface_size[1] - self.display_surface_size[1],
-                          "bottom": -self.internal_offset.y}
+                               "right": self.internal_surface_size[0] - self.display_surface_size[0],
+                               "top": self.internal_surface_size[1] - self.display_surface_size[1],
+                               "bottom": -self.internal_offset.y}
+
     def screen_movement_with_mouse_dragging(self, events_list):
 
         for event in events_list:
@@ -43,6 +44,7 @@ class MapMovementTracker(pygame.sprite.Group):
 
             if self.drag_flag:
                 self.handle_dragging(event)
+
     def change_zoom(self, event):
         self.zoom_scale += event.y * 0.03
         if self.zoom_scale > 1.25 and event.y > 0:
@@ -78,9 +80,6 @@ class MapMovementTracker(pygame.sprite.Group):
             self.offset += (mouse_pos_up - self.mouse_pos_down) * self.mouse_speed
 
             self.is_offset_in_borders(self.offset_borders)
-
-
-
 
     def get_total_offset(self):
         return self.offset + self.internal_offset

@@ -19,7 +19,7 @@ class SimUI:
     def start_simulation(self):
         graph = CityGraph(self.game_map)
         graph.run_simulation()
-        # print("Start Simulation")
+        # print("mulation")
     def init_elements(self):
         self.add_buttons()
         self.add_surface()
@@ -44,7 +44,7 @@ class SimUI:
         display_size = pygame.display.get_surface().get_size()
         button_size = (100, 100)
 
-        start_simlation= MenuButton("Start Simulation", display_size[0]-100, display_size[1]-100-100*4,
+        start_simlation= MenuButton("mulation", display_size[0]-100, display_size[1]-100-100*4,
                                   button_dimensions=button_size, action=self.start_simulation, color=(255, 0, 0),
                                   font_size=24, font_name="Arial")
 

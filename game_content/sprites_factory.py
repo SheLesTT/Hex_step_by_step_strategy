@@ -148,6 +148,7 @@ class HexesFactory():
 
     def replace_hex(self, hex_type: str, grid_pos: OffsetCoordinates, old_hex: Hexagon) -> Hexagon:
         print("Old hex", old_hex, "Building on hex", old_hex.building_on_hex)
+        old_hex
         hex_created = self.create_hex(hex_type, grid_pos)
         hex_created.rivers = old_hex.rivers
         hex_created.roads = old_hex.roads

@@ -1,3 +1,4 @@
+from copy import deepcopy
 from math import sqrt
 import pygame
 
@@ -15,6 +16,18 @@ class MapEditorMouseClickHandler:
         self.unit_selected = None
         self.clicked_element = None
         self.hexes_available_move_selected_unit = []
+        self.actions_list = []
+        self.set_UI_buttons()
+
+
+    def undo(self):
+        print("i am in undo")
+        if len(self.actions_list):
+            hexagon = self.actions_list.pop()
+            print(hexagon, print(self.actions_list))
+            # self.game_map.set_hex(hexagon, hexagon.grid_pos)
+    def set_UI_buttons(self):
+        self.user_interface.undo_button.add_action(self.undo, ())
 
     def handle_click(self, event):
         mouse_pos = event.dict["pos"]
@@ -27,7 +40,7 @@ class MapEditorMouseClickHandler:
     def add_hex(self, event):
         if selected_sprite_clicked := self.check_if_hex_is_clicked(event):
             hex_selected = self.user_interface.button_lists["hex_types"].selected_element
-            print("building on hex in Handler", selected_sprite_clicked.building_on_hex)
+            self.actions_list.append(1)
             self.game_map.change_hex(hex_selected, selected_sprite_clicked.grid_pos)
 
     def add_road(self, event):
