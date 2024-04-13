@@ -15,7 +15,7 @@ import random
 
 class Map:
 
-    def __init__(self, rows, columns, player_id, seed, players_amount=2, Offline=False):
+    def __init__(self, rows, columns, seed, file_to_load_from = ""):
         self.seed = seed
         random.seed(self.seed)
 
@@ -26,8 +26,10 @@ class Map:
         self.hex_width = 30 * sqrt(3)
         # self.hexes   = self.create_tiles()
 
-        self.hexes = self.load_from_json("json_save")
-        # self.hexes = self.create_empty_map()
+        if file_to_load_from == "":
+            self.hexes = self.create_empty_map()
+        else:
+            self.hexes = self.load_from_json(file_to_load_from)
         self.find_neighbours()
         # self.create_mines()
 
@@ -66,8 +68,8 @@ class Map:
 
     def load_from_json(self, name: str) -> HexesGroup:
         hexes = HexesGroup()
-
-        with open(name, "r") as f:
+        print("this is file in load from json", name)
+        with open("./model_saves/" + name, "r") as f:
             hexes_json = json.load(f)
 
         for grid_pos, hex_params in hexes_json.items():
