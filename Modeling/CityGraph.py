@@ -10,7 +10,6 @@ class CityGraph:
         i= 0
         while i < 100:
             i+=1
-            time.sleep(1)
             for city, neighbours in self.graph.items():
                 neighbours = [neighbour[0] for neighbour in neighbours]
                 for neighbour in neighbours:

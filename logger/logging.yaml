@@ -1,0 +1,53 @@
+version: 1
+formatters:
+  color_formatter:
+    (): logger.custom_logger_items.colored_formatter_factory
+    level_colors: # in rgb
+      - debug: # Grey
+          - 134
+          - 136
+          - 138
+      - info: # Green
+          - 144
+          - 238
+          - 144
+      - warning: # Yellow
+          - 251
+          - 177
+          - 23
+      - error: # Chili Red
+          - 194
+          - 24
+          - 7
+      - critical: # Ferrari
+          - 255
+          - 40
+          - 0
+    format_string: "{asctime} {filename} {lineno} [{levelname:^7}]:{message}"
+
+
+  file_formatter:
+    format: "%(asctime)s %(filename)s %(lineno)2d %(levelname)s   %(message)s"
+
+filters:
+  test_filter:
+    (): logger.custom_logger_items.AddrFilter
+
+
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: DEBUG
+    formatter: color_formatter
+    stream: ext://sys.stdout
+
+
+root:
+  level: NOTSET
+  handlers: [console]
+
+loggers:
+  logic:
+    level: DEBUG
+    handlers: [ logic_file_handler]
+

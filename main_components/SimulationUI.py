@@ -5,11 +5,10 @@ from player_actions.UI_Elements import MenuButton, TextInput, UiSurface
 
 
 class SimUI:
-    def __init__(self, window_size, game_map, spawner):
+    def __init__(self, window_size, game_map,):
         self.window_size = window_size
         self.UI_surface = None
         self.game_map = game_map
-        self.spawner = spawner
         self.lvl_1_elements = []
         self.lvl_2_elements = []
         self.button_lists = {}
