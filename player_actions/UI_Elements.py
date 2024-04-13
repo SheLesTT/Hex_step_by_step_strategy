@@ -24,7 +24,7 @@ class TextObservable(Observable):
     pass
 
 class UI_Element(ABC):
-    def __init__(self, name = ""):
+    def __init__(self, name ):
         self.visible = True
         self.name = name
 
@@ -38,10 +38,10 @@ class UI_Element(ABC):
     def make_visible(self):
         self.visible = True
 class Button(UI_Element):
-    def __init__(self, text, x, y, button_dimensions: tuple[int, int],x_offset = 0, y_offset = 0,
+    def __init__(self, text, x, y, button_dimensions: tuple[int, int],name = "",x_offset = 0, y_offset = 0,
                  action = empty_funciton, color:tuple[int, int, int]=(0, 255, 0),
                  font_size:int = 24, font_name:str ="Arial",):
-        super().__init__()
+        super().__init__(name=name)
         self.rect = pygame.Rect(x, y, button_dimensions[0], button_dimensions[1])
 
         self.text = text
@@ -69,8 +69,8 @@ class Button(UI_Element):
 class MenuButton(Button):
     def __init__(self, text, x, y,button_dimensions: tuple[int, int],x_offset =0, y_offset = 0,
                  action = empty_funciton,action_args= (),
-                 color=(0, 255, 0), font_size=24, font_name="Arial",  ):
-        super().__init__(text, x, y,button_dimensions , x_offset=x_offset, y_offset= y_offset, action= action, color=color, font_size = font_size, font_name = font_name)
+                 color=(0, 255, 0), font_size=24, font_name="Arial",name = ""  ):
+        super().__init__(text, x, y,button_dimensions , x_offset=x_offset, y_offset= y_offset, action= action, color=color, font_size = font_size, font_name = font_name, name = name)
         self.x_offset = x_offset
         self.y_offset = y_offset
         self.action = action
@@ -105,8 +105,9 @@ class ButtonList(UI_Element):
                  upper_surface_color: tuple[int, int, int] = (255, 255, 0),
                  position: tuple[int, int] = (0,0),
                  button_dimensions: tuple[int, int] = (180, 35),
-                 new_element_top_left_corner: tuple[int, int] = (10,10),):
-        super().__init__()
+                 new_element_top_left_corner: tuple[int, int] = (10,10),
+                 name = ""):
+        super().__init__(name)
         self.bottom_surf = pygame.Surface(bottom_surface_size, pygame.SRCALPHA)
         # self.but_rect = self.bottom_surf.get_rect(topleft=(0,0))
         self.upper_surf = pygame.Surface( upper_surface_size, pygame.SRCALPHA)
@@ -206,9 +207,9 @@ class TextInput(UI_Element, TextObservable):
                 observer.update(message)
 
 class UiSurface(UI_Element, TextObservable):
-    def __init__(self, size: tuple[int, int], position: tuple[int, int] , visible= False):
+    def __init__(self, size: tuple[int, int], position: tuple[int, int] , visible= False, name = ""):
 
-        super().__init__()
+        super().__init__(name= name)
         self.visible = visible
         self.observers = []
         self.surface = pygame.Surface(size, masks=(0,0,0))

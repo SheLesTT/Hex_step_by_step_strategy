@@ -8,9 +8,8 @@ import json
 from main_components.Map import Map
 from main_components.MapEditorMouseClickHandler import MapEditorMouseClickHandler
 from main_components.Render import Render
-from main_components.SimulationUI import SimUI
 from main_components.TextInputHandler import TextInputHandler
-from main_components.User_interface import UI
+from main_components.User_interface import UI, EditorUI
 from main_components.mapMovement import MapMovementTracker
 from player_actions.UI_Elements import *
 
@@ -38,7 +37,7 @@ class MapEditor:
 
         self.tracker = MapMovementTracker(internal_surface_size, window_size, )
 
-        self.user_interface = UI(window_size, self.game_map,)
+        self.user_interface = EditorUI(window_size, self.game_map,)
         self.click_handler = MapEditorMouseClickHandler(self.game_map, self.user_interface, self.tracker)
         self.renderer = Render(internal_surface_size, map_movement_tracker=self.tracker,
                                user_interface=self.user_interface)

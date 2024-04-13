@@ -13,7 +13,7 @@ class SimulationMouseClickHandler(MapMouseClickHandler):
         self.clicked_element = self.user_interface.check_click(mouse_pos)
 
         if not self.clicked_element:
-            self.user_interface.hide_lvl_2_elements()
+            self.user_interface.hide_layer_elements(1)
             self.check_hex_click(event)
 
     def handle_click_in_none_mod(self, event):

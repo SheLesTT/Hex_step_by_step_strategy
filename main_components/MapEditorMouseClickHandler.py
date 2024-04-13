@@ -35,19 +35,19 @@ class MapEditorMouseClickHandler(MapMouseClickHandler):
             # self.game_map.set_hex(hexagon, hexagon.grid_pos)
 
     def set_UI_buttons(self):
-        self.user_interface.undo_button.add_action(self.undo, ())
+        self.user_interface.find_element("undo").add_action(self.undo, ())
 
     def handle_click(self, event):
         mouse_pos = event.dict["pos"]
         self.clicked_element = self.user_interface.check_click(mouse_pos)
 
         if not self.clicked_element:
-            self.user_interface.hide_lvl_2_elements()
+            self.user_interface.hide_layer_elements(1)
             self.check_hex_click(event)
 
     def add_hex(self, event):
         if selected_sprite_clicked := self.check_if_hex_is_clicked(event):
-            hex_selected = self.user_interface.button_lists["hex_types"].selected_element
+            hex_selected = self.user_interface.find_element("hex_types").selected_element
             self.actions_list.append(
                 ActionRecord(selected_sprite_clicked.grid_pos, "hexagon", selected_sprite_clicked.type))
             print("list after save ", self.actions_list)
@@ -89,7 +89,7 @@ class MapEditorMouseClickHandler(MapMouseClickHandler):
 
         if event.button == 1:
 
-            match self.user_interface.button_lists["editor_mods"].selected_element:
+            match self.user_interface.find_element("editor_mods").selected_element:
                 case "Hexes":
                     self.add_hex(event)
                 case "Rivers":
