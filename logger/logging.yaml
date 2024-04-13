@@ -47,7 +47,10 @@ root:
   handlers: [console]
 
 loggers:
-  logic:
+  click_handler:
     level: DEBUG
-    handlers: [ logic_file_handler]
+    handlers: [ console]
 
+  UI:
+    level: DEBUG
+    handlers: [ console]

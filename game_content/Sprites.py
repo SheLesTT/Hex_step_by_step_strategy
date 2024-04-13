@@ -11,6 +11,7 @@ hex_side = 15 * sqrt(3)
 hex_width = 30 * sqrt(3)
 hex_height = hex_width / 2 * sqrt(3)
 
+
 class OffsetCoordinates(NamedTuple):
     row: int
     column: int
@@ -54,8 +55,6 @@ class MapObject(pygame.sprite.Sprite):
         return map_coord_x, map_coord_y
 
 
-
-
 class Hexagon(MapObject):
     def __init__(self, grid_pos, points_storage, color=(30, 70, 50), width=hex_width, height=hex_height):
 
@@ -80,8 +79,6 @@ class Hexagon(MapObject):
         self.unit_on_hex = None
         self.building_on_hex = None
 
-
-
     def is_road_on_hex(self):
         return any(self.roads)
 
@@ -102,9 +99,6 @@ class Hexagon(MapObject):
 
     def __repr__(self):
         return f"{self.__class__.__name__}"
-
-
-
 
     def add_unit(self, unit):
         self.unit_on_hex = unit
@@ -144,17 +138,15 @@ class Hexagon(MapObject):
 
         if triangle_number != 6:
             pygame.draw.polygon(self.image, (0, 30, 170), self.points_storage.get_points_for_road(triangle_number))
-        elif triangle_number ==6 and not any(self.roads[:6]):
+        elif triangle_number == 6 and not any(self.roads[:6]):
 
             pygame.draw.circle(self.image, (0, 30, 170), self.points_storage.get_points_for_road(triangle_number), 5)
-
-
 
     def add_building(self, building):
         self.building_on_hex = building
         self.draw()
 
-    def remove_building(self, building):
+    def remove_building(self, ):
         self.building_on_hex = None
         self.draw()
 
@@ -168,8 +160,6 @@ class Hexagon(MapObject):
         except IndexError as e:
             print("Invalid triangle number", triangle)
 
-
-
     def add_a_river(self, triangle):
         try:
             self.rivers[triangle] = True
@@ -177,7 +167,7 @@ class Hexagon(MapObject):
             raise InvalidTriangleError()
         self.draw()
 
-    def remove_river(self,triangle):
+    def remove_river(self, triangle):
         self.rivers[triangle] = False
         self.draw()
         opposite_triangle = (triangle + 3) % 6
@@ -201,6 +191,8 @@ class Hexagon(MapObject):
 
     def del_road(self, triangle):
         self.roads[triangle] = False
+        if triangle != 6 and not any(self.roads[:6]):
+            self.roads[6] = True
 
     def remove_road(self):
         for direction, neighbour in enumerate(self.neighbours):
@@ -212,9 +204,6 @@ class Hexagon(MapObject):
                 self.neighbours[direction].draw()
         self.del_road(6)
         self.draw()
-
-
-
 
 
 class HexagonLand(Hexagon):

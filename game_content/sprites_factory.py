@@ -162,6 +162,3 @@ class HexesFactory():
                 print("Error","Direction number  was", reversed_direction)
         hex_created.draw()
         return hex_created
-
-
-

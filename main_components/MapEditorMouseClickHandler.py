@@ -11,6 +11,7 @@ class ActionRecord(NamedTuple):
     position: OffsetCoordinates
     action_type: str
     additional_info: Any
+    delete: bool = False
 
 
 class MapEditorMouseClickHandler(MapMouseClickHandler):
@@ -18,24 +19,38 @@ class MapEditorMouseClickHandler(MapMouseClickHandler):
         super().__init__(game_map, user_interface, tracker)
         self.clicked_element = None
         self.actions_list = []
+        self.delete_mode = False
         self.set_UI_buttons()
-
 
     def undo(self):
         print("i am in undo")
         if len(self.actions_list):
             action = self.actions_list.pop()
+            self.logger.debug(f"undoing action {action}")
             if action.action_type == "hexagon":
                 self.game_map.change_hex(action.additional_info, action.position)
             elif action.action_type == "river":
-                self.game_map.hexes[action.position].remove_river(action.additional_info)
+                if not action.delete:
+                    self.game_map.hexes[action.position].remove_river(action.additional_info)
+                else:
+                    self.add_river(action.additional_info,self.game_map.hexes[action.position],True)
             elif action.action_type == "road":
-                self.game_map.hexes[action.position].remove_road()
+                if not action.delete:
+                    self.game_map.hexes[action.position].remove_road()
+                else:
+                    self.add_road(self.game_map.hexes[action.position], True)
+            elif action.action_type == "building":
+                if not action.delete:
+                    self.game_map.hexes[action.position].remove_building()
+                else:
+                    self.add_building(self.game_map.hexes[action.position], True)
 
-            # self.game_map.set_hex(hexagon, hexagon.grid_pos)
+    def change_delete_mod(self):
+        self.delete_mode = not self.delete_mode
 
     def set_UI_buttons(self):
         self.user_interface.find_element("undo").add_action(self.undo, ())
+        self.user_interface.find_element("delete").add_action(self.change_delete_mod, ())
 
     def handle_click(self, event):
         mouse_pos = event.dict["pos"]
@@ -45,42 +60,62 @@ class MapEditorMouseClickHandler(MapMouseClickHandler):
             self.user_interface.hide_layer_elements(1)
             self.check_hex_click(event)
 
-    def add_hex(self, event):
-        if selected_sprite_clicked := self.check_if_hex_is_clicked(event):
-            hex_selected = self.user_interface.find_element("hex_types").selected_element
-            self.actions_list.append(
-                ActionRecord(selected_sprite_clicked.grid_pos, "hexagon", selected_sprite_clicked.type))
-            print("list after save ", self.actions_list)
-            self.game_map.change_hex(hex_selected, selected_sprite_clicked.grid_pos)
+    def add_hex(self, sprite_clicked):
+        hex_selected = self.user_interface.find_element("hex_types").selected_element
+        self.game_map.change_hex(hex_selected, sprite_clicked.grid_pos)
+        self.actions_list.append(ActionRecord(sprite_clicked.grid_pos, "hexagon", sprite_clicked.type))
+        self.logger.info(f"Added hex, {sprite_clicked.grid_pos}, hexagon, {sprite_clicked.type}")
 
-    def add_road(self, event):
+    def add_road(self, sprite_clicked, undoing=False):
+        sprite_clicked.discover_what_roads_to_draw()
+        if not undoing:
+            self.actions_list.append(ActionRecord(sprite_clicked.grid_pos, "road", None))
+        self.logger.info(f"Added road, {sprite_clicked.grid_pos}, road")
 
-        if selected_sprite_clicked := self.check_if_hex_is_clicked(event):
-            selected_sprite_clicked.discover_what_roads_to_draw()
-            self.actions_list.append(ActionRecord(selected_sprite_clicked.grid_pos, "road", None))
+    def del_road(self, sprite_clicked, undoing = False):
+        sprite_clicked.remove_road()
+        if not undoing:
+            self.actions_list.append(ActionRecord(sprite_clicked.grid_pos, "road", None, True))
 
-    def add_river(self, event):
+    def which_triangle_was_clicked(self, event, sprite_clicked):
+        mouse = self.get_real_mouse_pos(event)
+        rect = self.get_hex_rectangle_with_offset(sprite_clicked)
+        local_x, local_y = self.calculate_mouse_pos_in_hex_rectangle(rect, mouse)
 
-        if selected_sprite_clicked := self.check_if_hex_is_clicked(event):
-            mouse = self.get_real_mouse_pos(event)
-            rect = self.get_hex_rectangle_with_offset(selected_sprite_clicked)
-            local_x, local_y = self.calculate_mouse_pos_in_hex_rectangle(rect, mouse)
+        return self.check_which_triangle_was_clicked(local_x, local_y, sprite_clicked)
 
-            triangle = self.check_which_triangle_was_clicked(local_x, local_y, selected_sprite_clicked)
-            selected_sprite_clicked.discover_rivers_to_draw(triangle)
-            self.actions_list.append(ActionRecord(selected_sprite_clicked.grid_pos, "river", triangle))
+    def add_river(self, event: pygame.event.Event | int , sprite_clicked, undoing=False):
+        if isinstance(event, pygame.event.Event):
+            triangle = self.which_triangle_was_clicked(event, sprite_clicked)
+        else:
+            triangle = event
+        sprite_clicked.discover_rivers_to_draw(triangle)
+        if not undoing:
+            self.actions_list.append(ActionRecord(sprite_clicked.grid_pos, "river", triangle))
+        self.logger.info(f"Added road, {sprite_clicked.grid_pos}, river, {triangle}")
 
-    def add_building(self, event):
-        if selected_sprite_clicked := self.check_if_hex_is_clicked(event):
-            selected_sprite_clicked.add_building(Town(selected_sprite_clicked.grid_pos))
-            self.actions_list.append(copy(selected_sprite_clicked))
+    def del_river(self, event, sprite_clicked, undoing=False):
+        triangle = self.which_triangle_was_clicked(event, sprite_clicked)
+        sprite_clicked.remove_river(triangle)
+        if not undoing:
+            self.actions_list.append(ActionRecord(sprite_clicked.grid_pos, "river", triangle, True))
 
-    def handle_click_in_none_mod(self, event):
+    def add_building(self, sprite_clicked, undoing=False):
+        sprite_clicked.add_building(Town(sprite_clicked.grid_pos))
+        if not undoing:
+            self.actions_list.append(ActionRecord(sprite_clicked.grid_pos, "building", None))
+        self.logger.info(f"Added building, {sprite_clicked.grid_pos}, building")
 
-        if selected_sprite_clicked := self.check_if_hex_is_clicked(event):
-            if selected_sprite_clicked.building_on_hex:
-                self.user_interface.find_element("city_surface").set_city(selected_sprite_clicked.building_on_hex)
-                self.user_interface.open_element("city_surface")
+    def del_building(self, sprite_clicked, undoing=False):
+        sprite_clicked.remove_building()
+        if not undoing:
+            self.actions_list.append(ActionRecord(sprite_clicked.grid_pos, "building", None, True))
+
+    def handle_click_in_none_mod(self, sprite_clicked):
+        if sprite_clicked.building_on_hex:
+            self.logger.debug("Clicked o a hex with a building in none mode")
+            self.user_interface.find_element("city_surface").set_city(sprite_clicked.building_on_hex)
+            self.user_interface.open_element("city_surface")
 
     def check_hex_click(self, event):
 
@@ -88,19 +123,26 @@ class MapEditorMouseClickHandler(MapMouseClickHandler):
         mouse -= self.tracker.get_dragging_offset()
 
         if event.button == 1:
+            if sprite_clicked := self.check_if_hex_is_clicked(event):
+                match self.user_interface.find_element("editor_mods").selected_element:
+                    case "Hexes":
+                        if not self.delete_mode:
+                            self.add_hex(sprite_clicked)
+                    case "Rivers":
+                        if not self.delete_mode:
+                            self.add_river(event, sprite_clicked)
+                        else:
+                            self.del_river(event, sprite_clicked)
+                    case "Roads":
+                        if not self.delete_mode:
+                            self.add_road(sprite_clicked)
+                        else:
+                            self.del_road(sprite_clicked)
+                    case "Buildings":
+                        if not self.delete_mode:
+                            self.add_building(sprite_clicked)
+                        else:
+                            self.del_building(sprite_clicked)
 
-            match self.user_interface.find_element("editor_mods").selected_element:
-                case "Hexes":
-                    self.add_hex(event)
-                case "Rivers":
-                    self.add_river(event)
-                case "Roads":
-                    self.add_road(event)
-                case "Buildings":
-                    print("Clicked building")
-                    self.add_building(event)
-
-                case "None":
-                    self.handle_click_in_none_mod(event)
-
-
+                    case "None":
+                        self.handle_click_in_none_mod(sprite_clicked)

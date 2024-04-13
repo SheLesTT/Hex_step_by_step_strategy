@@ -1,6 +1,10 @@
+import logging
 from abc import ABC, abstractmethod
 import pygame
 from math import sqrt
+
+from logger import logger
+
 
 class MapMouseClickHandler(ABC):
     def __init__(self, game_map, user_interface, tracker):
@@ -8,28 +12,30 @@ class MapMouseClickHandler(ABC):
         self.user_interface = user_interface
         self.game_map = game_map
         self.tracker = tracker
+        self.logger = logger.get_logger("click_handler")
 
     @abstractmethod
     def handle_click(self):
         pass
 
     def check_which_triangle_was_clicked(self, local_x, local_y, sprite):
-
+        triangle = None
         local_x, local_y = local_x - sprite.width / 2, sprite.height - local_y - sprite.height / 2
 
         if local_y > 0 and local_x > 0 and local_y <= sqrt(3) * local_x:
-            return 5
+            triangle = 5
         if local_y > 0 and local_y >= sqrt(3) * local_x and local_y >= -sqrt(3) * local_x:
-            return 4
+            triangle = 4
         if local_y > 0 and local_x < 0 and local_y <= -sqrt(3) * local_x:
-            return 3
+            triangle = 4
         if local_y < 0 and local_x > 0 and local_y >= -sqrt(3) * local_x:
-            return 0
+            triangle = 0
         if local_y < 0 and local_y <= sqrt(3) * local_x and local_y <= -sqrt(3) * local_x:
-            return 1
+            triangle = 1
         if local_y < 0 and local_x < 0 and local_y >= sqrt(3) * local_x:
-            return 2
-
+            triangle = 2
+        self.logger.debug(f"Triangle {triangle} was clicked")
+        return triangle
     def get_real_mouse_pos(self, event):
 
         mouse = pygame.math.Vector2(event.pos)
@@ -56,5 +62,5 @@ class MapMouseClickHandler(ABC):
             if new_rec.collidepoint(mouse.x, mouse.y):
                 local_x, local_y = self.calculate_mouse_pos_in_hex_rectangle(new_rec, mouse)
                 if sprite.mask.get_at((local_x, local_y)):
-                    print("Sprite clicked:", sprite.grid_pos, sprite.building_on_hex)
+                    self.logger.info(f"Sprite clicked: {sprite}")
                     return sprite

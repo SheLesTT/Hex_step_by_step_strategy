@@ -1,5 +1,6 @@
+import yaml
 from pygame.locals import *
-import logging
+import logging.config
 from main_components.Map import Map
 from main_components.MapEditorMouseClickHandler import MapEditorMouseClickHandler
 from main_components.Render import Render
@@ -40,46 +41,83 @@ class Model:
         self.text_input_handler = TextInputHandler(self.user_interface)
 
 
-def run_model(model):
-    run = True
-    while run:
-
-        events_list = pygame.event.get()
-        model.game_map.hexes.update()
-        model.renderer.display(events_list, model.game_map)
-        pygame.display.flip()
-
-        for event in events_list:
-            if event.type == QUIT:
-                run = False
-                global running
-                running = False
-            model.text_input_handler.handle_input(event)
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                model.click_handler.handle_click(event)
-
-        clock.tick(60)
-
-    pygame.quit()
-
-
 def map_editor():
+    run = True
+
+    def stop_run():
+        nonlocal run
+        run = False
+
     game_map = Map(10, 10, id, 10, 3, True)
     user_interface = EditorUI(window_size, game_map)
-    model= Model(game_map, user_interface)
-    model.user_interface.subscribe_text_elements(map_editor.text_input_handler)
+    user_interface.find_element("exit").add_action(stop_run, ())
+    model = Model(game_map, user_interface)
+    model.user_interface.subscribe_text_elements(model.text_input_handler)
+
+    def run_model(model, ):
+        nonlocal run
+        while run:
+            print(run)
+
+            events_list = pygame.event.get()
+            model.game_map.hexes.update()
+            model.renderer.display(events_list, model.game_map)
+            pygame.display.flip()
+
+            for event in events_list:
+                if event.type == QUIT:
+                    run = False
+                    global running
+                    running = False
+                model.text_input_handler.handle_input(event)
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    model.click_handler.handle_click(event)
+
+            clock.tick(60)
+
+
+
     run_model(model)
 
 
 def offline_game():
+    run = True
+
+    def stop_run():
+        nonlocal run
+        run = False
+
     game_map = Map(10, 10, id, 10, 3, True)
     user_interface = SimUI(window_size, game_map, )
     model = Model(game_map, user_interface)
     model.set_user_interface(user_interface)
+
+    def run_model(model, ):
+        nonlocal run
+        while run:
+
+            events_list = pygame.event.get()
+            model.game_map.hexes.update()
+            model.renderer.display(events_list, model.game_map)
+            pygame.display.flip()
+
+            for event in events_list:
+                if event.type == QUIT:
+                    run = False
+                    global running
+                    running = False
+                model.text_input_handler.handle_input(event)
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    model.click_handler.handle_click(event)
+
+            clock.tick(60)
+
+
+
     run_model(model)
 
 
-def game_menu(testing):
+def game_menu():
     global running
 
     def stop_menue():
@@ -98,9 +136,14 @@ def game_menu(testing):
                                    action=map_editor, color=(0, 0, 255), font_size=24, font_name="Arial")
 
     buttons = [offline_game_button, exit_button, map_editor_button]
+
     for button in buttons:
         button.draw(screen)
+
     while running:
+        print(running)
+
+
 
         if running:
             events_list = pygame.event.get()
@@ -120,4 +163,4 @@ def game_menu(testing):
                 sys.exit()
 
 
-game_menu(testing=False)
+game_menu()

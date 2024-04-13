@@ -2,7 +2,7 @@ from collections import defaultdict
 
 from Modeling.CityGraph import CityGraph
 from player_actions.UI_Elements import *
-
+from logger import  logger
 pygame.font.init()
 font_size = 20
 font = pygame.font.SysFont("Arial", font_size)
@@ -11,15 +11,17 @@ class UI:
     def __init__(self, window_size):
         self.window_size = window_size
         self.elements = [[],[]]
-
+        self.logger = logger.get_logger("UI")
         self.UI_surface = None
 
     def add_layer (self, element):
         self.elements.append([])
+        self.logger.info(f"Appended level, there are total {len(element)} layers")
 
     def add_element(self, layer: int, element):
         try:
             self.elements[layer].append(element)
+            self.logger.debug(f"added element {element}, to layer {layer}")
         except ValueError:
             print("invalid layer number")
 
@@ -28,15 +30,18 @@ class UI:
         for layer in self.elements:
             for element in layer:
                 if element.name == name:
+                    self.logger.debug(f"found  {element}, with name {name}")
                     return element
 
     def open_element(self, name):
         self.find_element(name).make_visible()
         self.draw_elements()
+        self.logger.debug(f"made element with name {name} visible ")
 
     def hide_element(self, name):
         self.find_element(name).hide()
         self.draw_elements()
+        self.logger.debug(f"made element with name {name} invisible ")
 
     def hide_layer_elements(self, layer):
         if not isinstance(layer, list):
@@ -45,7 +50,8 @@ class UI:
             print("this is elements", self.elements[1])
             for element in self.elements[lvl]:
                 element.hide()
-            self.draw_elements()
+        self.draw_elements()
+        self.logger.debug(f"hide UI element of layer {layer} ")
 
     def draw_elements(self):
         self.UI_surface = pygame.Surface(self.window_size, pygame.SRCALPHA)
@@ -58,8 +64,10 @@ class UI:
         for layer in reversed(self.elements):
             for element in layer:
                 if element.visible and element.check_click(mouse_pos):
+                    self.logger.info(f"UI element {element}, was clicked")
                     return True
         return False
+
 
 
 
@@ -104,6 +112,7 @@ class EditorUI(UI):
         display_size = pygame.display.get_surface().get_size()
         button_size = (100, 100)
         undo_button = MenuButton("Undo", 700, 700, button_size,name="undo")
+        delete_button = MenuButton("Delete", 600,600,button_size, name="delete")
         finish_move = MenuButton("Create graph", display_size[0] - 100, display_size[1] - 100 - 100 * 3,
                                  button_dimensions=button_size, action=self.game_map.create_graph, color=(255, 0, 0),
                                  font_size=24, font_name="Arial")
@@ -112,9 +121,12 @@ class EditorUI(UI):
                                   button_dimensions=button_size, action=self.save_game, color=(255, 0, 0),
                                   font_size=24, font_name="Arial")
 
+        exit_button = MenuButton("Exit", 700,0,button_size, name="exit")
         self.add_element(0, undo_button)
         self.add_element(0, finish_move)
         self.add_element(0, load_to_json)
+        self.add_element(0, delete_button)
+        self.add_element(0, exit_button)
 
     def subscribe_text_elements(self, observer, ):
         for layer in self.elements:
