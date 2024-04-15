@@ -2,29 +2,35 @@ from abc import ABC, abstractmethod
 import pygame, sys
 
 
-
 def empty_funciton():
     pass
+
+
 class Observable:
     def __init__(self):
         self.observers = []
 
     def add_observer(self, observer):
         pass
+
     def remove_observer(self):
         pass
+
     def notify_observers(self):
         pass
+
 
 class TextObservable(Observable):
 
     def __init__(self):
         super().__init__()
         self.observers = []
+
     pass
 
+
 class UI_Element(ABC):
-    def __init__(self, name ):
+    def __init__(self, name):
         self.visible = True
         self.name = name
 
@@ -37,10 +43,18 @@ class UI_Element(ABC):
 
     def make_visible(self):
         self.visible = True
+
+
+class Scrollable:
+    @abstractmethod
+    def check_scroll(self, scroll):
+        pass
+
+
 class Button(UI_Element):
-    def __init__(self, text, x, y, button_dimensions: tuple[int, int],name = "",x_offset = 0, y_offset = 0,
-                 action = empty_funciton, color:tuple[int, int, int]=(0, 255, 0),
-                 font_size:int = 24, font_name:str ="Arial",):
+    def __init__(self, text, x, y, button_dimensions: tuple[int, int], name="", x_offset=0, y_offset=0,
+                 action=empty_funciton, color: tuple[int, int, int] = (0, 255, 0),
+                 font_size: int = 24, font_name: str = "Arial", ):
         super().__init__(name=name)
         self.rect = pygame.Rect(x, y, button_dimensions[0], button_dimensions[1])
 
@@ -62,15 +76,16 @@ class Button(UI_Element):
             display_surface.blit(self.text_surf, self.text_rect)
 
     @abstractmethod
-    def check_click(self,pos) -> bool:
+    def check_click(self, pos) -> bool:
         pass
 
 
 class MenuButton(Button):
-    def __init__(self, text, x, y,button_dimensions: tuple[int, int],x_offset =0, y_offset = 0,
-                 action = empty_funciton,action_args= (),
-                 color=(0, 255, 0), font_size=24, font_name="Arial",name = ""  ):
-        super().__init__(text, x, y,button_dimensions , x_offset=x_offset, y_offset= y_offset, action= action, color=color, font_size = font_size, font_name = font_name, name = name)
+    def __init__(self, text, x, y, button_dimensions: tuple[int, int], x_offset=0, y_offset=0,
+                 action=empty_funciton, action_args=(),
+                 color=(0, 255, 0), font_size=24, font_name="Arial", name=""):
+        super().__init__(text, x, y, button_dimensions, x_offset=x_offset, y_offset=y_offset, action=action,
+                         color=color, font_size=font_size, font_name=font_name, name=name)
         self.x_offset = x_offset
         self.y_offset = y_offset
         self.action = action
@@ -81,38 +96,36 @@ class MenuButton(Button):
         self.absolute_rect = pygame.Rect(self.abs_x, self.abs_y, self.button_dimensions[0], self.button_dimensions[1])
 
     def check_click(self, pos: tuple[int, int]):
-
-        if  self.absolute_rect.collidepoint(pos):
-                print("Button was clicked ", self.action, pos,self.absolute_rect)
-                self.action(*self.action_args)
-                return True
+        if self.absolute_rect.collidepoint(pos):
+            print("Button was clicked ", self.action, pos, self.absolute_rect)
+            self.action(*self.action_args)
+            return True
         return False
 
-    def add_action(self, action, action_args = ()):
+    def add_action(self, action, action_args=()):
         self.action = action
         self.action_args = action_args
-        print("Action afeter add", self.action)
+
     def move_button(self, offset):
         self.y_offset += offset
         self.abs_y += offset
         self.absolute_rect = pygame.Rect(self.abs_x, self.abs_y, self.button_dimensions[0], self.button_dimensions[1])
 
 
-
-class ButtonList(UI_Element):
-    def __init__(self,bottom_surface_size: tuple[int, int] = (200, 400),
-                 upper_surface_size: tuple[int, int]= (200,200),
+class ButtonList(UI_Element, Scrollable):
+    def __init__(self, bottom_surface_size: tuple[int, int] = (200, 400),
+                 upper_surface_size: tuple[int, int] = (200, 200),
                  upper_surface_color: tuple[int, int, int] = (255, 255, 0),
-                 position: tuple[int, int] = (0,0),
+                 position: tuple[int, int] = (0, 0),
                  button_dimensions: tuple[int, int] = (180, 35),
-                 new_element_top_left_corner: tuple[int, int] = (10,10),
-                 name = ""):
+                 new_element_top_left_corner: tuple[int, int] = (10, 10),
+                 name=""):
         super().__init__(name)
         self.bottom_surf = pygame.Surface(bottom_surface_size, pygame.SRCALPHA)
         # self.but_rect = self.bottom_surf.get_rect(topleft=(0,0))
-        self.upper_surf = pygame.Surface( upper_surface_size, pygame.SRCALPHA)
+        self.upper_surf = pygame.Surface(upper_surface_size, pygame.SRCALPHA)
         self.upper_surf_color = upper_surface_color
-        self.upper_surf.blit(self.bottom_surf,(0,0))
+        self.upper_surf.blit(self.bottom_surf, (0, 0))
         self.upper_surf.fill(self.upper_surf_color)
         self.x_offset = position[0]
         self.y_offset = position[1]
@@ -125,39 +138,42 @@ class ButtonList(UI_Element):
         self.scroll = 0
         # self.offset_x = offset_x
 
-
-    def add_element(self,button_text,element_to_choose):
+    def add_element(self, button_text, element_to_choose):
 
         game_button = MenuButton(button_text, self.new_element_top_left_corner_x, self.new_element_top_left_corner_y,
-                                 self.button_dimensions, x_offset=self.x_offset, y_offset=self.y_offset,)
+                                 self.button_dimensions, x_offset=self.x_offset, y_offset=self.y_offset, )
         game_button.draw(self.bottom_surf)
 
-        self.upper_surf.blit(self.bottom_surf,(0,self.scroll))
+        self.upper_surf.blit(self.bottom_surf, (0, self.scroll))
         self.elements[game_button] = element_to_choose
         self.new_element_top_left_corner_y += 40
 
-    def check_scroll(self,y):
-        mouse_pos = pygame.mouse.get_pos()
-        if  self.absolute_rect.collidepoint(mouse_pos):
 
-            test_scroll = self.scroll + y*10
-            if test_scroll< 0 and  test_scroll> - (self.bottom_surf.get_height() - self.upper_surf.get_height()):
+
+
+    def check_scroll(self, y):
+        mouse_pos = pygame.mouse.get_pos()
+        if self.absolute_rect.collidepoint(mouse_pos):
+            test_scroll = self.scroll + y * 10
+            if test_scroll < 0 and test_scroll > - (self.bottom_surf.get_height() - self.upper_surf.get_height()):
                 self.scroll = test_scroll
                 self.upper_surf.fill(self.upper_surf_color)
-                self.upper_surf.blit(self.bottom_surf,(0,self.scroll))
-                [element.move_button(y*10) for element in self.elements]
+                self.upper_surf.blit(self.bottom_surf, (0, self.scroll))
+                [element.move_button(y * 10) for element in self.elements]
+
     def check_click(self, mouse_pos: tuple[int, int]):
         for element in self.elements:
             if element.check_click(mouse_pos):
                 self.selected_element = self.elements[element]
                 return self
+
     def draw(self, display_surface: pygame.Surface):
         if self.visible:
             display_surface.blit(self.upper_surf, (self.x_offset, self.y_offset))
 
 
 class TextInput(UI_Element, TextObservable):
-    def __init__(self, text = None, position = (10,10), offset = (0,0), editable = True, name = ""):
+    def __init__(self, text=None, position=(10, 10), offset=(0, 0), editable=True, name=""):
         super().__init__(name=name)
         self.text = text
         self.position = position
@@ -166,7 +182,7 @@ class TextInput(UI_Element, TextObservable):
         self.font = pygame.font.SysFont("Arial", 24)
         self.text_surf = self.font.render(self.text, True, '#FFFFFF')
         self.surf = pygame.Surface((200, 50))
-        self.input_rect = pygame.Rect(10, 10, 180, 30 )
+        self.input_rect = pygame.Rect(10, 10, 180, 30)
         self.abs_rect = pygame.Rect(self.abs_position[0], self.abs_position[1], 200, 50)
         self.editable = editable
         self.active = False
@@ -179,7 +195,7 @@ class TextInput(UI_Element, TextObservable):
             self.surf = pygame.Surface((200, 50))
             pygame.draw.rect(self.surf, (0, 255, 0), self.input_rect, 2, 3)
             self.text_surf = self.font.render(self.text, True, '#FFFFFF')
-            self.surf.blit(self.text_surf, (self.input_rect.x +5, self.input_rect.y +5))
+            self.surf.blit(self.text_surf, (self.input_rect.x + 5, self.input_rect.y + 5))
             display_surface.blit(self.surf, self.position)
 
     def check_click(self, mouse_pos: tuple[int, int]):
@@ -190,15 +206,13 @@ class TextInput(UI_Element, TextObservable):
                 self.notify_observers()
             return self
 
-
-
     def add_observer(self, observer):
         self.observers.append(observer)
 
     def remove_observer(self, observer):
         self.observers.remove(observer)
 
-    def notify_observers(self, message = None):
+    def notify_observers(self, message=None):
         print("Observers in notify observers", self.observers)
         for observer in self.observers:
             if not message:
@@ -206,13 +220,14 @@ class TextInput(UI_Element, TextObservable):
             else:
                 observer.update(message)
 
-class UiSurface(UI_Element, TextObservable):
-    def __init__(self, size: tuple[int, int], position: tuple[int, int] , visible= False, name = ""):
 
-        super().__init__(name= name)
+class UiSurface(UI_Element, TextObservable):
+    def __init__(self, size: tuple[int, int], position: tuple[int, int], visible=False, name=""):
+
+        super().__init__(name=name)
         self.visible = visible
         self.observers = []
-        self.surface = pygame.Surface(size, masks=(0,0,0))
+        self.surface = pygame.Surface(size, masks=(0, 0, 0))
         self.position = position
         self.rect = self.surface.get_rect(topleft=self.position)
         self.elements = []
@@ -223,14 +238,13 @@ class UiSurface(UI_Element, TextObservable):
 
     def generate_text_phields(self):
 
-        population = TextInput("", position=(10,10), offset=(500,0), name="population")
-        cattle = TextInput("", position=(10,60), offset=(500,0), name="cattle")
+        population = TextInput("", position=(10, 10), offset=(500, 0), name="population")
+        cattle = TextInput("", position=(10, 60), offset=(500, 0), name="cattle")
 
         self.elements.append(population)
         self.elements.append(cattle)
         for observer in self.observers:
             self.add_observer(observer)
-
 
     def find_element(self, name):
         for element in self.elements:
@@ -261,6 +275,7 @@ class UiSurface(UI_Element, TextObservable):
             element.visible = True
 
         # self
+
     def draw(self, display_surface: pygame.Surface):
         if self.visible:
             for element in self.elements:
@@ -277,8 +292,7 @@ class UiSurface(UI_Element, TextObservable):
                     return element
             return self
 
-
-    def notify_observers(self, message = None):
+    def notify_observers(self, message=None):
         for observer in self.observers:
             if not message:
                 observer.update(self)
@@ -296,10 +310,3 @@ class UiSurface(UI_Element, TextObservable):
         for element in self.elements:
             if isinstance(element, TextObservable):
                 element.remove_observer(observer)
-
-
-
-
-
-
-

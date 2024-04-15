@@ -43,14 +43,14 @@ class Model:
         self.text_input_handler = TextInputHandler(self.user_interface)
 
 
-def map_editor(file_to_load_from=""):
+def map_editor(file_to_load_from, rows =10, columns=10, new=False):
     run = True
 
     def stop_run():
         nonlocal run
         run = False
 
-    game_map = Map(10, 10, id, file_to_load_from)
+    game_map = Map(file_to_load_from, rows, columns, new)
     user_interface = EditorUI(window_size, game_map)
     user_interface.find_element("exit").add_action(stop_run, ())
     model = Model(game_map, user_interface)
@@ -126,11 +126,18 @@ def model_loader():
     screen.fill((255, 255, 255))
 
     def start_editor():
-        filename = UI.find_element("map_saves").selected_element
+        filename = UI["map_saves"].selected_element
         map_editor(filename)
 
-    UI.find_element("exit").add_action(stop_menue)
-    UI.find_element("load_map").add_action(start_editor)
+    def create_new_map_for_editing():
+        filename = UI["input_model_name"].text
+        rows = UI["input_rows"].text
+        columns = UI["input_columns"].text
+        map_editor(filename, rows, columns, new=True)
+
+    UI["exit"].add_action(stop_menue)
+    UI["load_map"].add_action(start_editor)
+    UI["start_simulation"].add_action(create_new_map_for_editing)
 
     text_handler = TextInputHandler(UI)
     UI.subscribe_text_elements(text_handler)
@@ -151,11 +158,14 @@ def model_loader():
                 elif event.type == MOUSEBUTTONDOWN:
                     pos = event.dict["pos"]
                     UI.check_click(pos)
+                elif event.type == MOUSEWHEEL:
+                    UI.check_scroll(event.y)
                 else:
                     text_handler.handle_input(event)
+            UI.refresh_button_list()
 
-                # if event.type == pygame.MOUSEWHEEL:
-                #      map_saves.check_scroll(event.y)
+            # if event.type == pygame.MOUSEWHEEL:
+            #      map_saves.check_scroll(event.y)
 
 
 def game_menu():

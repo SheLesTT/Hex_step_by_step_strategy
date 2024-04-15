@@ -15,21 +15,20 @@ import random
 
 class Map:
 
-    def __init__(self, rows, columns, seed, file_to_load_from = ""):
-        self.seed = seed
-        random.seed(self.seed)
+    def __init__(self, file_to_load_from, rows=10, columns=10, new=False):
 
-        self.rows = rows
-        self.columns = columns
+        self.rows = int(rows)
+        self.columns = int(columns)
+        self.file_to_load_from = file_to_load_from
         self.hexes_factory = HexesFactory()
-
+        self.new = new
         self.hex_width = 30 * sqrt(3)
         # self.hexes   = self.create_tiles()
 
-        if file_to_load_from == "":
+        if self.new:
             self.hexes = self.create_empty_map()
         else:
-            self.hexes = self.load_from_json(file_to_load_from)
+            self.hexes = self.load_from_json(self.file_to_load_from)
         self.find_neighbours()
         # self.create_mines()
 
@@ -70,8 +69,11 @@ class Map:
         hexes = HexesGroup()
         print("this is file in load from json", name)
         with open("./model_saves/" + name, "r") as f:
-            hexes_json = json.load(f)
-
+            map_json= json.load(f)
+            meta_json =map_json["meta_info"]
+            self.rows = int(meta_json["rows"])
+            self.columns = int(meta_json["columns"])
+            hexes_json = map_json["map"]
         for grid_pos, hex_params in hexes_json.items():
             grid_pos = OffsetCoordinates(*list(map(int, grid_pos[1:-1].split(","))))
 
@@ -80,14 +82,15 @@ class Map:
             hexes.add(hex_created)
         return hexes
 
-    def save_to_json(self, file_name):
+    def save_to_json(self, ):
 
         map_dict = {}
         for hex in self.hexes:
             grid_pos, d = hex.save_to_json()
             map_dict[grid_pos] = d
-        with open(file_name, "w") as f:
-            json.dump(map_dict, f, sort_keys=True, indent=4)
+        final_dict = {"meta_info":{"rows":self.rows, "columns" :self.columns}, "map": map_dict}
+        with open("./model_saves/" + self.file_to_load_from, "w") as f:
+            json.dump(final_dict, f, sort_keys=True, indent=4)
 
     def create_hex(self, type: str, grid_pos: OffsetCoordinates) -> Hexagon:
         hex_created = self.hexes_factory.create_hex(type, grid_pos)

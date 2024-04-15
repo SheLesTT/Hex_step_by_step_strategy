@@ -26,12 +26,13 @@ class UI:
         except ValueError:
             print("invalid layer number")
 
-
+    def __getitem__(self, name):
+        return self.find_element(name)
     def find_element(self, name):
         for layer in self.elements:
             for element in layer:
                 if element.name == name:
-                    self.logger.debug(f"found  {element}, with name {name}")
+                    # self.logger.debug(f"found  {element}, with name {name}")
                     return element
 
     def open_element(self, name):
@@ -48,7 +49,6 @@ class UI:
         if not isinstance(layer, list):
             layer = [layer]
         for lvl in layer:
-            print("this is elements", self.elements[1])
             for element in self.elements[lvl]:
                 element.hide()
         self.draw_elements()
@@ -69,6 +69,14 @@ class UI:
                     return True
         return False
 
+    def check_scroll(self, scroll: int) -> bool:
+        for layer in reversed(self.elements):
+            for element in layer:
+                if element.visible and isinstance(element, Scrollable):
+                    element.check_scroll(scroll)
+                    element.draw(self.UI_surface)
+                    self.logger.info(f"UI element {element}, was scrolled")
+                    return True
 
 class ChooseSavedModelUI(UI):
     def __init__(self, window_size):
@@ -84,10 +92,10 @@ class ChooseSavedModelUI(UI):
     def init_buttons(self):
         button_dimensions = (200,50)
 
-        offline_game_button = MenuButton("Start Simulation", 100, 100, button_dimensions=button_dimensions,
+        offline_game_button = MenuButton("Start Simulation", 200, 100, button_dimensions=button_dimensions,
                                          action=None, color=(0, 0, 255), font_size=24, font_name="Arial", name= "start_simulation")
 
-        exit_button = MenuButton("Exit", 100, 400, button_dimensions=button_dimensions,
+        exit_button = MenuButton("Exit", 200, 400, button_dimensions=button_dimensions,
                                  action=None, color=(0, 0, 255), font_size=24, font_name="Arial",name = "exit")
 
         map_editor_button = MenuButton("Load map", 600, 100, button_dimensions=button_dimensions,
@@ -100,12 +108,26 @@ class ChooseSavedModelUI(UI):
     def add_button_list(self):
         map_saves = ButtonList(position=(500,500),name= "map_saves")
         for save_name in os.listdir("./model_saves"):
+            # print("name from a folder", save_name)
             map_saves.add_element(str(save_name), save_name)
         self.add_element(0,map_saves)
+
+    def refresh_button_list(self):
+        map_saves = self.find_element("map_saves")
+
+        for save_name in os.listdir("./model_saves"):
+            if save_name not in map_saves.elements.values():
+                map_saves.add_element(str(save_name), save_name)
+        self.draw_elements()
+
 
     def add_text_input(self):
         input_model_name = TextInput("", position=(10,10), name= "input_model_name")
         self.add_element(0,input_model_name)
+        input_rows_amount = TextInput("", position=(10,110), name= "input_rows")
+        self.add_element(0,input_rows_amount)
+        input_columns_amount= TextInput("", position=(10,210), name= "input_columns")
+        self.add_element(0,input_columns_amount)
 
     def subscribe_text_elements(self, observer, ):
         for layer in self.elements:
@@ -123,7 +145,7 @@ class EditorUI(UI):
 
 
     def save_game(self):
-        self.game_map.save_to_json("./model_saves/test_save.json")
+        self.game_map.save_to_json()
 
     def init_elements(self):
         self.add_buttons()
