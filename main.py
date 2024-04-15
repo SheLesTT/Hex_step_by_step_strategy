@@ -1,15 +1,15 @@
-import os
-
-import yaml
 from pygame.locals import *
 import logging.config
 from main_components.Map import Map
 from main_components.MapEditorMouseClickHandler import MapEditorMouseClickHandler
 from main_components.Render import Render
-from main_components.TextInputHandler import TextInputHandler
-from main_components.User_interface import EditorUI, SimUI, ChooseSavedModelUI
+from UI_staff.TextInputHandler import TextInputHandler
+from UI_staff.UI_surfaces.choose_sim_modelUI import ChooseSimModelUI
+from UI_staff.UI_surfaces.simulationUI import SimUI
+from UI_staff.UI_surfaces.edtiorUI import EditorUI
+from UI_staff.UI_surfaces.choose_edit_modelUI import ChooseSavedModelUI
 from main_components.mapMovement import MapMovementTracker
-from player_actions.UI_Elements import *
+from UI_staff.UI_Elements import *
 
 from main_components.SimulationMouseClickHandler import SimulationMouseClickHandler
 
@@ -28,22 +28,13 @@ class Model:
         self.tracker = MapMovementTracker(internal_surface_size, window_size, )
         self.game_map = game_map
         self.user_interface = user_interface
-        self.click_handler = MapEditorMouseClickHandler(self.game_map, self.user_interface, self.tracker)
         self.renderer = Render(internal_surface_size, map_movement_tracker=self.tracker,
                                user_interface=self.user_interface)
         self.text_input_handler = TextInputHandler(self.user_interface)
-
-    def set_user_interface(self, UI):
-        self.user_interface = UI
-
-        self.tracker = MapMovementTracker(internal_surface_size, window_size, )
-        self.renderer = Render(internal_surface_size, map_movement_tracker=self.tracker,
-                               user_interface=self.user_interface)
-        self.click_handler = SimulationMouseClickHandler(self.game_map, self.user_interface, self.tracker, )
-        self.text_input_handler = TextInputHandler(self.user_interface)
+        self.click_handler = None
 
 
-def map_editor(file_to_load_from, rows =10, columns=10, new=False):
+def map_editor(file_to_load_from, rows=10, columns=10, new=False):
     run = True
 
     def stop_run():
@@ -54,6 +45,7 @@ def map_editor(file_to_load_from, rows =10, columns=10, new=False):
     user_interface = EditorUI(window_size, game_map)
     user_interface.find_element("exit").add_action(stop_run, ())
     model = Model(game_map, user_interface)
+    model.click_handler = MapEditorMouseClickHandler(model.game_map, model.user_interface, model.tracker)
     model.user_interface.subscribe_text_elements(model.text_input_handler)
 
     def run_model(model, ):
@@ -79,18 +71,20 @@ def map_editor(file_to_load_from, rows =10, columns=10, new=False):
     run_model(model)
 
 
-def offline_game():
+def offline_game(filename):
     run = True
 
     def stop_run():
         nonlocal run
         run = False
 
-    game_map = Map(10, 10, id, 10, 3, True)
-    user_interface = SimUI(window_size, game_map, )
-    model = Model(game_map, user_interface)
-    model.set_user_interface(user_interface)
+    game_map = Map(filename)
+    UI = SimUI(window_size, game_map, )
+    model = Model(game_map, UI)
+    model.click_handler = SimulationMouseClickHandler(model.click_handler, model.user_interface, model.tracker)
 
+    UI["exit"].add_action(stop_run)
+    UI["parameter"].add_action(model.game_map.visualize_parameters)
     def run_model(model, ):
         nonlocal run
         while run:
@@ -114,7 +108,44 @@ def offline_game():
     run_model(model)
 
 
-def model_loader():
+def sim_model_loader():
+    run = True
+
+    UI = ChooseSimModelUI(window_size)
+
+    def stop_menue():
+        nonlocal run
+        run = False
+
+    screen.fill((255, 255, 255))
+
+    def start_simulation():
+        filename = UI["map_saves"].selected_element
+        offline_game(filename)
+
+    UI["exit"].add_action(stop_menue)
+    UI["start_simulation"].add_action(start_simulation)
+
+    while run:
+        if run:
+            events_list = pygame.event.get()
+
+            screen.fill((255, 255, 255))
+            screen.blit(UI.UI_surface, (0, 0))
+
+            pygame.display.flip()
+            for event in events_list:
+
+                if event.type == QUIT:
+                    run = False
+                elif event.type == MOUSEBUTTONDOWN:
+                    pos = event.dict["pos"]
+                    UI.check_click(pos)
+                elif event.type == MOUSEWHEEL:
+                    UI.check_scroll(event.y)
+
+
+def edit_model_loader():
     run = True
 
     UI = ChooseSavedModelUI(window_size)
@@ -178,13 +209,13 @@ def game_menu():
     screen.fill((255, 255, 255))
     button_dimensions = (200, 50)
     offline_game_button = MenuButton("Start Simulation", 100, 100, button_dimensions=button_dimensions,
-                                     action=offline_game, color=(0, 0, 255), font_size=24, font_name="Arial")
+                                     action=sim_model_loader, color=(0, 0, 255), font_size=24, font_name="Arial")
 
     exit_button = MenuButton("Exit", 100, 400, button_dimensions=button_dimensions,
                              action=stop_menue, color=(0, 0, 255), font_size=24, font_name="Arial")
 
     map_editor_button = MenuButton("Map Editor", 300, 100, button_dimensions=button_dimensions,
-                                   action=model_loader, color=(0, 0, 255), font_size=24, font_name="Arial")
+                                   action=edit_model_loader, color=(0, 0, 255), font_size=24, font_name="Arial")
 
     buttons = [offline_game_button, exit_button, map_editor_button]
 

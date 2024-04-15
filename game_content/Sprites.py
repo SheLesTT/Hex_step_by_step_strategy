@@ -250,6 +250,10 @@ class Building(MapObject):
         print("in buildings save to json")
         return {"name": str(self.__class__.__name__), "data": {"population": self.population, "cattle": self.cattle}}
 
+    def visualise_parameter(self):
+        my_font = pygame.font.SysFont('Comic Sans MS', 16)
+        text_surface = my_font.render('Some Text', False, (0, 125, 0))
+        self.image.blit(text_surface, (15,15))
 
 class Town(Building):
     def __init__(self, grid_pos):

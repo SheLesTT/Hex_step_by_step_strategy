@@ -66,6 +66,9 @@ class Grid(dict):
     def __iter__(self):
         return iter(self.key_to_value)
 
+    def items(self):
+        r
+
     def pop(self, value):
         keys=  self.value_to_keys.get(value, set())
         for key in keys:

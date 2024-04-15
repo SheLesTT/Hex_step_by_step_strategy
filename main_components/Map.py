@@ -9,8 +9,6 @@ from game_content.Groups import HexesGroup
 from game_content.Sprites import Hexagon, HexagonMountain, HexagonSea, HexagonLand, Town, HexagonEmpty, \
     OffsetCoordinates
 from game_content.sprites_factory import HexesFactory
-from noise.Noise import Noise
-import random
 
 
 class Map:
@@ -23,6 +21,7 @@ class Map:
         self.hexes_factory = HexesFactory()
         self.new = new
         self.hex_width = 30 * sqrt(3)
+        self.buildings = []
         # self.hexes   = self.create_tiles()
 
         if self.new:
@@ -65,6 +64,7 @@ class Map:
         print(graph)
         return graph
 
+
     def load_from_json(self, name: str) -> HexesGroup:
         hexes = HexesGroup()
         print("this is file in load from json", name)
@@ -80,6 +80,8 @@ class Map:
             hex_created = self.create_hex(hex_params, grid_pos)
             hex_created.draw()
             hexes.add(hex_created)
+            if hex_created.building_on_hex:
+                self.buildings.append(hex_created)
         return hexes
 
     def save_to_json(self, ):
@@ -127,10 +129,6 @@ class Map:
         return int((abs(cube_coords1[0] - cube_coords2[0]) + abs(cube_coords1[1] - cube_coords2[1]) + abs(
             cube_coords1[2] - cube_coords2[2])) // 2)
 
-    def create_tiles(self):
-        noise = Noise(self.rows, self.columns, seed=self.seed)
-        hexes = noise.create_tiles()
-        return hexes
 
     def create_empty_map(self):
         hexes = HexesGroup()
@@ -158,5 +156,14 @@ class Map:
                             hexes.append(hex)
         return hexes
 
+    def visualize_parameters(self, ):
+        for building in self.buildings:
+            building.building_on_hex.visualise_parameter()
+            building.draw()
+
+
+
+
     def __str__(self) -> str:
         return f"map with {self.rows} rows and {self.columns} columns"
+
