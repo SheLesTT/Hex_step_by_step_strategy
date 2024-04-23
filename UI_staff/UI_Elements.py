@@ -134,6 +134,7 @@ class ButtonList(UI_Element, Scrollable):
         self.absolute_rect = pygame.Rect(self.x_offset, self.y_offset, 200, 300)
         self.button_dimensions = button_dimensions
         self.elements = {}
+        self.elements_list = []
         self.selected_element = None
         self.scroll = 0
         # self.offset_x = offset_x
@@ -146,8 +147,8 @@ class ButtonList(UI_Element, Scrollable):
 
         self.upper_surf.blit(self.bottom_surf, (0, self.scroll))
         self.elements[game_button] = element_to_choose
+        self.elements_list.append(game_button)
         self.new_element_top_left_corner_y += 40
-
 
 
 
@@ -168,9 +169,14 @@ class ButtonList(UI_Element, Scrollable):
                 return self
 
     def draw(self, display_surface: pygame.Surface):
+        print("drawing button list", self.visible, self.name)
         if self.visible:
             display_surface.blit(self.upper_surf, (self.x_offset, self.y_offset))
 
+# class ToggleButtonList(ButtonList):
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         self.title_surface = pygame.Surface((200, 0))
 
 class TextInput(UI_Element, TextObservable):
     def __init__(self, text=None, position=(10, 10), offset=(0, 0), editable=True, name=""):

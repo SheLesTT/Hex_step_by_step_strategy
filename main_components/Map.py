@@ -156,9 +156,9 @@ class Map:
                             hexes.append(hex)
         return hexes
 
-    def visualize_parameters(self, ):
+    def visualize_parameters(self, parameter: str ):
         for building in self.buildings:
-            building.building_on_hex.visualise_parameter()
+            building.building_on_hex.visualise_parameter(parameter)
             building.draw()
 
 

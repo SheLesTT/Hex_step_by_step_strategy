@@ -84,7 +84,6 @@ def offline_game(filename):
     model.click_handler = SimulationMouseClickHandler(model.click_handler, model.user_interface, model.tracker)
 
     UI["exit"].add_action(stop_run)
-    UI["parameter"].add_action(model.game_map.visualize_parameters)
     def run_model(model, ):
         nonlocal run
         while run:

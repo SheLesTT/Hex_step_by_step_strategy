@@ -241,38 +241,57 @@ class HexagonEmpty(Hexagon):
 class Building(MapObject):
     def __init__(self, grid_pos):
         super().__init__(grid_pos)
-        self.image = pygame.Surface((hex_width, hex_height), pygame.SRCALPHA)
         self.name = "building"
         self.population = 123
-        self.cattle = 0
-
+        self.food = 0
+        self.goods = 0
+        self.draw()
     def save_to_json(self):
         print("in buildings save to json")
-        return {"name": str(self.__class__.__name__), "data": {"population": self.population, "cattle": self.cattle}}
+        return {"name": str(self.name), "data": {"population": self.population, "cattle": self.cattle}}
+    def draw(self):
+        self.image = pygame.Surface((hex_width, hex_height), pygame.SRCALPHA)
 
-    def visualise_parameter(self):
-        my_font = pygame.font.SysFont('Comic Sans MS', 16)
-        text_surface = my_font.render('Some Text', False, (0, 125, 0))
-        self.image.blit(text_surface, (15,15))
+
+    def visualise_parameter(self, parameter: str = None):
+        print(f"visualising {parameter}, dict {self.__dict__}")
+        self.draw()
+        my_font = pygame.font.SysFont(str(self.__dict__[parameter]), 16)
+        text_surface = my_font.render(str(self.__dict__[parameter]), False, (255, 255, 255))
+        self.image.blit(text_surface, (0,19))
 
 class Town(Building):
     def __init__(self, grid_pos):
         super().__init__(grid_pos)
-        type = "town"
+        self.name = "Town"
+        self.draw()
+
+    def draw(self):
+        super().draw()
         town_image = pygame.image.load("Resources/town.png")
         self.image.blit(town_image, (0, 0))
+
+
+   def generate_parameters(self):
+
 
 
 class Village(Building):
     def __init__(self, grid_pos):
         super().__init__(grid_pos)
-        type = "village"
+        self.name= "Village"
+        self.draw()
+
+    def draw(self):
+        super().draw()
         village_image = pygame.image.load("Resources/village.png")
+        print("drawing in village")
         self.image.blit(village_image, (0, 0))
-
-
 class Mine(Building):
     def __init__(self, grid_pos):
         super().__init__(grid_pos)
+        self.draw()
+    def draw(self):
+        super().draw()
         coin_image = pygame.image.load("Resources/goldcoin1.png")
         self.image.blit(coin_image, (-17, -20))

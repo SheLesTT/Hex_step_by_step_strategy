@@ -1,7 +1,7 @@
 from copy import copy
 import pygame
 import logging
-from game_content.Sprites import Town, OffsetCoordinates
+from game_content.Sprites import Town, OffsetCoordinates, Village
 from typing import NamedTuple, Any
 
 from main_components.MapMouseClickHandler import MapMouseClickHandler
@@ -43,7 +43,7 @@ class MapEditorMouseClickHandler(MapMouseClickHandler):
                 if not action.delete:
                     self.game_map.hexes[action.position].remove_building()
                 else:
-                    self.add_building(self.game_map.hexes[action.position], True)
+                    self.add_building(self.game_map.hexes[action.position],action.additional_info, True)
 
     def change_delete_mod(self):
         self.delete_mode = not self.delete_mode
@@ -100,16 +100,23 @@ class MapEditorMouseClickHandler(MapMouseClickHandler):
         if not undoing:
             self.actions_list.append(ActionRecord(sprite_clicked.grid_pos, "river", triangle, True))
 
-    def add_building(self, sprite_clicked, undoing=False):
-        sprite_clicked.add_building(Town(sprite_clicked.grid_pos))
+    def add_building(self, sprite_clicked, building_type, undoing=False):
+        if building_type == "Town":
+            building = Town(sprite_clicked.grid_pos)
+        if building_type == "Village":
+            building = Village(sprite_clicked.grid_pos)
+        print("adding building", building_type)
+
+        sprite_clicked.add_building(building)
         if not undoing:
-            self.actions_list.append(ActionRecord(sprite_clicked.grid_pos, "building", None))
+            self.actions_list.append(ActionRecord(sprite_clicked.grid_pos, "building", building_type))
         self.logger.info(f"Added building, {sprite_clicked.grid_pos}, building")
 
     def del_building(self, sprite_clicked, undoing=False):
+        building_name = sprite_clicked.building_on_hex.name
         sprite_clicked.remove_building()
         if not undoing:
-            self.actions_list.append(ActionRecord(sprite_clicked.grid_pos, "building", None, True))
+            self.actions_list.append(ActionRecord(sprite_clicked.grid_pos, "building", building_name, True))
 
     def handle_click_in_none_mod(self, sprite_clicked):
         if sprite_clicked.building_on_hex:
@@ -140,7 +147,8 @@ class MapEditorMouseClickHandler(MapMouseClickHandler):
                             self.del_road(sprite_clicked)
                     case "Buildings":
                         if not self.delete_mode:
-                            self.add_building(sprite_clicked)
+                            building_type = self.user_interface.find_element("towns").selected_element
+                            self.add_building(sprite_clicked, building_type)
                         else:
                             self.del_building(sprite_clicked)
 
