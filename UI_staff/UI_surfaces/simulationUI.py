@@ -39,9 +39,9 @@ class SimUI(UI):
 
         test_button= MenuButton("Test", 600,0, button_dimensions=button_size,
                                  action=None, color=(0, 0, 255), font_size=24, font_name="Arial",name = "parameter")
-        start_simlation= MenuButton("mulation", display_size[0]-100, display_size[1]-100-100*4,
+        start_simlation= MenuButton("Simulation", display_size[0]-100, display_size[1]-100-100*4,
                                     button_dimensions=button_size, action=self.start_simulation, color=(255, 0, 0),
-                                    font_size=24, font_name="Arial")
+                                    font_size=24, font_name="Arial", name="start_simulation")
         test_button.add_action(self.visualize_param)
         self.add_element(0,start_simlation)
         self.add_element(0, exit_button)

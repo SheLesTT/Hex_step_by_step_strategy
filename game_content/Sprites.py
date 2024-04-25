@@ -1,4 +1,5 @@
 import math
+import random
 from abc import ABC
 from math import cos, sin, pi, sqrt
 from typing import NamedTuple
@@ -144,10 +145,12 @@ class Hexagon(MapObject):
 
     def add_building(self, building):
         self.building_on_hex = building
+        self.discover_what_roads_to_draw()
         self.draw()
 
     def remove_building(self, ):
         self.building_on_hex = None
+        self.remove_road()
         self.draw()
 
     def discover_rivers_to_draw(self, triangle):
@@ -272,8 +275,15 @@ class Town(Building):
         self.image.blit(town_image, (0, 0))
 
 
-   def generate_parameters(self):
+    def generate_parameters(self):
+        self.population = random.randint(1000, 10000)
+        self.goods = random.randint(50, 100)
 
+    def produce(self):
+        self.goods  = self.population * 0.1
+
+    def consume(self):
+        self.food -= self.population
 
 
 class Village(Building):
@@ -287,6 +297,17 @@ class Village(Building):
         village_image = pygame.image.load("Resources/village.png")
         print("drawing in village")
         self.image.blit(village_image, (0, 0))
+
+    def generate_parameters(self):
+        self.population = random.randint(25, 300)
+        self.goods = random.randint(50, 100)
+        self.food = random.randint(50, 100)
+
+    def produce(self):
+        self.food = self.population * 2
+
+    def consume(self):
+        self.food -= self.population
 class Mine(Building):
     def __init__(self, grid_pos):
         super().__init__(grid_pos)

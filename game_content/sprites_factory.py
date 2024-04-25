@@ -152,7 +152,8 @@ class HexesFactory():
         hex_created = self.create_hex(hex_type, grid_pos)
         hex_created.rivers = old_hex.rivers
         hex_created.roads = old_hex.roads
-        hex_created.add_building(old_hex.building_on_hex)
+        if old_hex.building_on_hex:
+            hex_created.add_building(old_hex.building_on_hex)
         hex_created.neighbours = old_hex.neighbours
         for direction, neighbour in enumerate(hex_created.neighbours):
             reversed_direction =  (direction+ 3) % 6

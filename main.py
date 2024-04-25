@@ -1,3 +1,5 @@
+from threading import Thread
+import time
 from pygame.locals import *
 import logging.config
 from main_components.Map import Map
@@ -42,11 +44,13 @@ def map_editor(file_to_load_from, rows=10, columns=10, new=False):
         run = False
 
     game_map = Map(file_to_load_from, rows, columns, new)
+    print("game map ", game_map)
     user_interface = EditorUI(window_size, game_map)
     user_interface.find_element("exit").add_action(stop_run, ())
     model = Model(game_map, user_interface)
     model.click_handler = MapEditorMouseClickHandler(model.game_map, model.user_interface, model.tracker)
     model.user_interface.subscribe_text_elements(model.text_input_handler)
+
 
     def run_model(model, ):
         nonlocal run
@@ -68,6 +72,8 @@ def map_editor(file_to_load_from, rows=10, columns=10, new=False):
 
             clock.tick(60)
 
+
+    # b.start()
     run_model(model)
 
 
@@ -81,9 +87,12 @@ def offline_game(filename):
     game_map = Map(filename)
     UI = SimUI(window_size, game_map, )
     model = Model(game_map, UI)
-    model.click_handler = SimulationMouseClickHandler(model.click_handler, model.user_interface, model.tracker)
+    model.click_handler = SimulationMouseClickHandler(model.game_map, model.user_interface, model.tracker)
+
+
 
     UI["exit"].add_action(stop_run)
+
     def run_model(model, ):
         nonlocal run
         while run:
@@ -102,7 +111,12 @@ def offline_game(filename):
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     model.click_handler.handle_click(event)
 
-            clock.tick(60)
+            clock.tick(10)
+
+    # t.start()
+    # time.sleep(1)
+
+    # b.start()
 
     run_model(model)
 
