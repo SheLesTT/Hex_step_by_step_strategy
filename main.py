@@ -216,6 +216,55 @@ def edit_model_loader():
             # if event.type == pygame.MOUSEWHEEL:
             #      map_saves.check_scroll(event.y)
 
+def statistics():
+    run = True
+
+    UI = ChooseSavedModelUI(window_size)
+
+    def stop_menue():
+        nonlocal run
+        run = False
+
+    screen.fill((255, 255, 255))
+
+    def start_editor():
+        filename = UI["map_saves"].selected_element
+        map_editor(filename)
+
+    def create_new_map_for_editing():
+        filename = UI["input_model_name"].text
+        rows = UI["input_rows"].text
+        columns = UI["input_columns"].text
+        map_editor(filename, rows, columns, new=True)
+
+    UI["exit"].add_action(stop_menue)
+    UI["load_map"].add_action(start_editor)
+    UI["start_simulation"].add_action(create_new_map_for_editing)
+
+    text_handler = TextInputHandler(UI)
+    UI.subscribe_text_elements(text_handler)
+
+    while run:
+
+        if run:
+            events_list = pygame.event.get()
+
+            screen.fill((255, 255, 255))
+            screen.blit(UI.UI_surface, (0, 0))
+
+            pygame.display.flip()
+            for event in events_list:
+
+                if event.type == QUIT:
+                    run = False
+                elif event.type == MOUSEBUTTONDOWN:
+                    pos = event.dict["pos"]
+                    UI.check_click(pos)
+                elif event.type == MOUSEWHEEL:
+                    UI.check_scroll(event.y)
+                else:
+                    text_handler.handle_input(event)
+            UI.refresh_button_list()
 
 def game_menu():
     global running
@@ -234,8 +283,9 @@ def game_menu():
 
     map_editor_button = MenuButton("Map Editor", 300, 100, button_dimensions=button_dimensions,
                                    action=edit_model_loader, color=(0, 0, 255), font_size=24, font_name="Arial")
-
-    buttons = [offline_game_button, exit_button, map_editor_button]
+    statistics_button = MenuButton("Map Editor", 300, 400, button_dimensions=button_dimensions,
+                                   action=statistics, color=(0, 0, 255), font_size=24, font_name="Arial")
+    buttons = [offline_game_button, exit_button, map_editor_button, statistics_button]
 
     for button in buttons:
         button.draw(screen)

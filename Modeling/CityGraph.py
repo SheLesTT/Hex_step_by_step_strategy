@@ -33,7 +33,7 @@ class CityGraph:
 
     def calculate(self):
         i = 1
-        while i < 100:
+        while i < 10:
             print(i)
             time.sleep(1)
             i+=1
@@ -46,7 +46,7 @@ class CityGraph:
                 city.yearly_calculation(pandemic_severity)
             self.game_map.draw_buildings()
             self.game_map.calculate_global_parameters()
-
+        self.game_map.write_statistics_to_file()
 
 
 

@@ -30,6 +30,7 @@ class GlobalParameters(Observable):
     def change_parameter(self, parameter, value):
         self.__dict__[parameter] = value
         self.notify_observers(parameter,value)
+
 class Map:
 
     def __init__(self, file_to_load_from, rows=10, columns=10, new=False):
@@ -41,6 +42,7 @@ class Map:
         self.new = new
         self.hex_width = 30 * sqrt(3)
         self.buildings = []
+        self.statistics = {"population": [], "food": [], "goods": []}
         # self.hexes   = self.create_tiles()
 
         if self.new:
@@ -197,8 +199,15 @@ class Map:
             building.draw()
     def calculate_global_parameters(self, ):
         for parameter in ["population", "food", "goods"]:
-            self.global_parameters.change_parameter(parameter, self.calculate_total_parameter(parameter))
-
+            param_value = self.calculate_total_parameter(parameter)
+            self.global_parameters.change_parameter(parameter, param_value)
+            self.statistics[parameter].append(param_value)
+    def write_statistics_to_file(self):
+        full_stats  = {"global_parameters":self.statistics}
+        for idx,building in enumerate(self.buildings):
+            full_stats[f"building_{idx}"] = building.building_on_hex.statistics
+        with open("statistics.json", "w") as f:
+            json.dump(full_stats, f, sort_keys=True, indent=4)
     def calculate_total_parameter(self, parameter: str):
         total = 0
         for building in self.buildings:

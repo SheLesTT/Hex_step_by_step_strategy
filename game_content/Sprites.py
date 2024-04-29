@@ -329,7 +329,7 @@ class Building(MapObject):
         self.goods = 0
         self.parameter_for_visualisation = None
         self.draw()
-        self.statistics = {"population": self.population, "food": self.food, "goods": [self.goods}
+        self.statistics = {"population": [self.population], "food": [self.food], "goods": [self.goods]}
     def save_to_json(self):
         print("in buildings save to json")
         return {"name": str(self.name), "data": {"population": self.population, "cattle": self.cattle}}
@@ -345,10 +345,14 @@ class Building(MapObject):
             my_font = pygame.font.SysFont(str(parameter), 16)
             text_surface = my_font.render(str(parameter), False, (255, 255, 255))
             self.image.blit(text_surface, (0,19))
-
+    def collect_statistics(self):
+        self.statistics["population"].append(self.population)
+        self.statistics["food"].append(self.food)
+        self.statistics["goods"].append(self.goods)
     def yearly_calculation(self, pandemic_severity):
         self.population = int(self.population - self.population * (0.5 * pandemic_severity * random.triangular(0.8, 0.9, 1.1)))
         self.population += 1
+        self.collect_statistics()
     def change_visualization_parameter(self, parameter: str):
         print("changing parameter", parameter)
         self.parameter_for_visualisation = parameter
