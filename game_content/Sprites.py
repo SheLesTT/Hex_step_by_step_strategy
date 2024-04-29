@@ -329,15 +329,21 @@ class Building(MapObject):
         self.goods = 0
         self.parameter_for_visualisation = None
         self.draw()
+        self.statistics = {"population": self.population, "food": self.food, "goods": [self.goods}
     def save_to_json(self):
         print("in buildings save to json")
         return {"name": str(self.name), "data": {"population": self.population, "cattle": self.cattle}}
     def draw(self):
         self.image = pygame.Surface((hex_width, hex_height), pygame.SRCALPHA)
+
+    def get_parameter(self, parameter: str):
+        return self.__dict__[parameter] 
+        
     def draw_parameter_for_visualisation(self):
         if self.parameter_for_visualisation:
-            my_font = pygame.font.SysFont(str(self.__dict__[self.parameter_for_visualisation]), 16)
-            text_surface = my_font.render(str(self.__dict__[self.parameter_for_visualisation]), False, (255, 255, 255))
+            parameter = self.get_parameter(self.parameter_for_visualisation)
+            my_font = pygame.font.SysFont(str(parameter), 16)
+            text_surface = my_font.render(str(parameter), False, (255, 255, 255))
             self.image.blit(text_surface, (0,19))
 
     def yearly_calculation(self, pandemic_severity):

@@ -5,12 +5,31 @@ import pygame
 
 from math import *
 
+from UI_staff.UI_Elements import Observable
 from game_content.Groups import HexesGroup
 from game_content.Sprites import Hexagon, HexagonMountain, HexagonSea, HexagonLand, Town, HexagonEmpty, \
     OffsetCoordinates
 from game_content.sprites_factory import HexesFactory
 
+class GlobalParameters(Observable):
 
+    def __init__(self):
+        super().__init__()
+        self.observers = []
+        self.population = 0
+        self.food = 0
+        self.goods = 0
+
+    def add_observer(self, observer):
+        if not observer in self.observers:
+            self.observers.append(observer)
+    def notify_observers(self, parameter=None, value=None):
+        for observer in self.observers:
+            print("notifying observers", parameter, value)
+            observer.update(parameter,value)
+    def change_parameter(self, parameter, value):
+        self.__dict__[parameter] = value
+        self.notify_observers(parameter,value)
 class Map:
 
     def __init__(self, file_to_load_from, rows=10, columns=10, new=False):
@@ -29,6 +48,7 @@ class Map:
         else:
             self.hexes = self.load_from_json(self.file_to_load_from)
         self.find_neighbours()
+        self.global_parameters = GlobalParameters()
         # self.create_mines()
 
         # self.spawner = Spawner(self)
@@ -175,6 +195,15 @@ class Map:
     def draw_buildings(self):
         for building in self.buildings:
             building.draw()
+    def calculate_global_parameters(self, ):
+        for parameter in ["population", "food", "goods"]:
+            self.global_parameters.change_parameter(parameter, self.calculate_total_parameter(parameter))
+
+    def calculate_total_parameter(self, parameter: str):
+        total = 0
+        for building in self.buildings:
+            total += building.building_on_hex.get_parameter(parameter)
+        return total
 
 
 

@@ -45,6 +45,7 @@ class CityGraph:
             for city, neighbours in self.graph.items():
                 city.yearly_calculation(pandemic_severity)
             self.game_map.draw_buildings()
+            self.game_map.calculate_global_parameters()
 
 
 

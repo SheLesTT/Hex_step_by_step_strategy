@@ -226,8 +226,41 @@ class TextInput(UI_Element, TextObservable):
                 observer.update(self)
             else:
                 observer.update(message)
+class Label(UI_Element):
+    def __init__(self, text, position, name=""):
+        super().__init__(name=name)
+        self.text = text
+        self.position = position
+        self.font = pygame.font.SysFont("Arial", 24)
+        self.text_surf = self.font.render(self.text, False,(0,255,0,) )
 
+    def draw(self, display_surface: pygame.Surface):
+        if self.visible:
+            display_surface.blit(self.text_surf, self.position)
+class ParametersSurface(UI_Element):
+    def __init__(self, size: tuple[int, int], position: tuple[int, int], visible=True, name=""):
+        super().__init__(name=name)
+        self.visible = visible
+        self.observers = []
+        self.size = size
+        self.surface = pygame.Surface(size, masks=(0, 0, 0))
+        self.position = position
+        self.rect = self.surface.get_rect(topleft=self.position)
+        self.labels = {}
+        self.add_lable("population", (10, 10), "population")
+        self.add_lable("goods", (10, 30), "goods")
+        self.add_lable("food", (10, 50), "food")
 
+    def draw(self, display_surface: pygame.Surface):
+        self.surface = pygame.Surface(self.size, masks=(0, 0, 0))
+        for label in self.labels.values():
+            label.draw(self.surface)
+        display_surface.blit(self.surface, self.position)
+    def add_lable(self,text, position, name):
+        print("adding label", text, position, name)
+        self.labels[name] = Label(str(text), position, name)
+    def check_click(self, mouse_pos: tuple[int, int]):
+        pass    
 class UiSurface(UI_Element, TextObservable):
     def __init__(self, size: tuple[int, int], position: tuple[int, int], visible=False, name=""):
 
@@ -245,8 +278,8 @@ class UiSurface(UI_Element, TextObservable):
 
     def generate_text_phields(self):
 
-        population = TextInput("", position=(10, 10), offset=(500, 0), name="population")
-        cattle = TextInput("", position=(10, 60), offset=(500, 0), name="cattle")
+        population = TextInput("", position=(10, 10), offset=self.position, name="population")
+        cattle = TextInput("", position=(10, 60), offset=self.position, name="cattle")
 
         self.elements.append(population)
         self.elements.append(cattle)

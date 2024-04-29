@@ -1,7 +1,7 @@
 import pygame
 
 from Modeling.CityGraph import CityGraph
-from UI_staff.UI_Elements import MenuButton, UiSurface, ButtonList
+from UI_staff.UI_Elements import MenuButton, UiSurface, ButtonList, ParametersSurface
 from UI_staff.UI import UI
 
 
@@ -10,7 +10,7 @@ class SimUI(UI):
         super().__init__(window_size)
         self.window_size = window_size
         self.game_map = game_map
-
+        self.global_parameters = {"population":0, "food":0, "goods":0}
         self.init_elements()
         self.draw_elements()
 
@@ -22,6 +22,27 @@ class SimUI(UI):
         self.add_buttons()
         self.add_surface()
         self.add_hexes_list()
+        self.add_parameter_surface()
+        self.subscribe_to_global_parameters()
+
+    def subscribe_to_global_parameters(self, ):
+        self.game_map.global_parameters.add_observer(self)
+
+    def update_parameter_surface(self):
+        surface = self.find_element("parameters_surface")
+        surface.add_lable(self.global_parameters["population"], (80, 10), "population_val")
+        surface.add_lable(self.global_parameters["food"], (80, 30), "food_val")
+        surface.add_lable(self.global_parameters["goods"], (80, 50), "goods_val")
+        surface.draw(self.UI_surface)
+    def update(self, parameter, value):
+        self.global_parameters[parameter] = value
+        self.update_parameter_surface()
+
+
+
+    def add_parameter_surface(self):
+        surface = ParametersSurface(size=(200,100), position=(0,0),visible=True, name="parameters_surface")
+        self.add_element(0,surface)
 
     def add_hexes_list(self):
         button_list = ButtonList(position=(200, 0), name="parameters")
