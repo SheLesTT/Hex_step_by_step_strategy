@@ -63,6 +63,18 @@ class Map:
 
         print(graph)
         return graph
+    def calculate(self):
+        self.graph = self.create_graph()
+        i = 1
+        while i < 100:
+            print(i)
+            i+=1
+            for city, neighbours in self.graph.items():
+                neighbours = [neighbour[0] for neighbour in neighbours]
+                for neighbour in neighbours:
+                    if city.population < neighbour.population:
+                        city.population += 1
+                        neighbour.population -= 1
 
 
     def load_from_json(self, name: str) -> HexesGroup:
@@ -158,7 +170,10 @@ class Map:
 
     def visualize_parameters(self, parameter: str ):
         for building in self.buildings:
-            building.building_on_hex.visualise_parameter(parameter)
+            building.building_on_hex.change_visualization_parameter(parameter)
+            building.draw()
+    def draw_buildings(self):
+        for building in self.buildings:
             building.draw()
 
 

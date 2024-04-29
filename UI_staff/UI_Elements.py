@@ -147,6 +147,8 @@ class ButtonList(UI_Element, Scrollable):
 
         self.upper_surf.blit(self.bottom_surf, (0, self.scroll))
         self.elements[game_button] = element_to_choose
+        if not self.selected_element:
+            self.selected_element = element_to_choose
         self.elements_list.append(game_button)
         self.new_element_top_left_corner_y += 40
 
@@ -169,7 +171,6 @@ class ButtonList(UI_Element, Scrollable):
                 return self
 
     def draw(self, display_surface: pygame.Surface):
-        print("drawing button list", self.visible, self.name)
         if self.visible:
             display_surface.blit(self.upper_surf, (self.x_offset, self.y_offset))
 

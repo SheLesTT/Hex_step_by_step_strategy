@@ -130,6 +130,7 @@ class Hexagon(MapObject):
                 self.draw_a_road(idx)
 
         if self.building_on_hex:
+            self.building_on_hex.draw()
             self.image.blit(self.building_on_hex.image, (11, 4))
 
     def draw_a_river(self, triangle):
@@ -214,6 +215,7 @@ class HexagonLand(Hexagon):
         super().__init__(grid_pos, game_map, color, width=hex_width, height=hex_height)
         self.color = color
         self.type = "HexagonLand"
+        self.fertility = 100
         self.draw()
 
 
@@ -240,7 +242,84 @@ class HexagonEmpty(Hexagon):
         self.type = "HexagonEmpty"
         self.draw()
 
+class HexagonForest(HexagonLand):
+    def __init__(self, grid_pos, game_map, color=(30, 70, 50), width=hex_width, height=hex_height):
+        super().__init__(grid_pos, game_map, color, width=hex_width, height=hex_height)
+        self.color = color
+        self.type = "HexagonForest"
+        self.draw()
+    def draw(self):
+        super().draw()
+        forest_image = pygame.image.load("Resources/forest.png")
+        self.image.blit(forest_image, (9, 5))
+class HexagonWheat(HexagonLand):
+    def __init__(self, grid_pos, game_map, color=(30, 70, 50), width=hex_width, height=hex_height):
+        self.fertility_colors = {"maximum":(76,183,27), "medium":(130,203,69), "low":(199,134,70), "minimum":(135,147,1)}
+        super().__init__(grid_pos, game_map, color, width=hex_width, height=hex_height)
+        self.color = color
+        self.type = "HexagonWheat"
+        self.draw()
+        self.check_fertility()
+        self.producing = True
+    def draw(self):
+        super().draw()
+        forest_image = pygame.image.load("Resources/wheat.png")
+        self.image.blit(forest_image, (9, 5))
 
+    def produce(self, modifier=1):
+        production = 1000*modifier*self.fertility
+        self.change_fertility()
+        self.check_fertility()
+        return production
+
+    def change_fertility(self, modifier=1):
+        if self.producing:
+            if self.fertility > 0:
+                self.fertility -= 10
+        else:
+            self.fertility += 10
+    def stop_producing(self):
+        self.producing = False
+    def start_producing(self):
+        self.producing = True
+    def check_fertility(self):
+        new_color = None
+        if self.fertility > 80 and self.fertility <= 100:
+            new_color = self.fertility_colors["maximum"]
+        elif self.fertility > 50 and self.fertility <= 80:
+            new_color = self.fertility_colors["medium"]
+        elif self.fertility > 20 and self.fertility <= 50:
+            new_color = self.fertility_colors["low"]
+        elif self.fertility >= 0 and self.fertility <= 20:
+            new_color = self.fertility_colors["minimum"]
+        if new_color  != self.color:
+            self.color = new_color
+
+            print("This is color in fertility", self.color, self.fertility)
+            self.draw()
+
+
+class HexagonSheep(HexagonLand):
+    def __init__(self, grid_pos, game_map, color=(30, 70, 50), width=hex_width, height=hex_height):
+        super().__init__(grid_pos, game_map, color, width=hex_width, height=hex_height)
+        self.color = color
+        self.type = "HexagonSheep"
+        self.draw()
+    def draw(self):
+        super().draw()
+        forest_image = pygame.image.load("Resources/sheep.png")
+        self.image.blit(forest_image, (9, 5))
+
+class HexagonGrape(HexagonLand):
+    def __init__(self, grid_pos, game_map, color=(30, 70, 50), width=hex_width, height=hex_height):
+        super().__init__(grid_pos, game_map, color, width=hex_width, height=hex_height)
+        self.color = color
+        self.type = "HexagonGrape"
+        self.draw()
+    def draw(self):
+        super().draw()
+        forest_image = pygame.image.load("Resources/grape.png")
+        self.image.blit(forest_image, (9, 5))
 class Building(MapObject):
     def __init__(self, grid_pos):
         super().__init__(grid_pos)
@@ -248,20 +327,29 @@ class Building(MapObject):
         self.population = 123
         self.food = 0
         self.goods = 0
+        self.parameter_for_visualisation = None
         self.draw()
     def save_to_json(self):
         print("in buildings save to json")
         return {"name": str(self.name), "data": {"population": self.population, "cattle": self.cattle}}
     def draw(self):
         self.image = pygame.Surface((hex_width, hex_height), pygame.SRCALPHA)
+    def draw_parameter_for_visualisation(self):
+        if self.parameter_for_visualisation:
+            my_font = pygame.font.SysFont(str(self.__dict__[self.parameter_for_visualisation]), 16)
+            text_surface = my_font.render(str(self.__dict__[self.parameter_for_visualisation]), False, (255, 255, 255))
+            self.image.blit(text_surface, (0,19))
 
-
-    def visualise_parameter(self, parameter: str = None):
-        print(f"visualising {parameter}, dict {self.__dict__}")
+    def yearly_calculation(self, pandemic_severity):
+        self.population = int(self.population - self.population * (0.5 * pandemic_severity * random.triangular(0.8, 0.9, 1.1)))
+        self.population += 1
+    def change_visualization_parameter(self, parameter: str):
+        print("changing parameter", parameter)
+        self.parameter_for_visualisation = parameter
         self.draw()
-        my_font = pygame.font.SysFont(str(self.__dict__[parameter]), 16)
-        text_surface = my_font.render(str(self.__dict__[parameter]), False, (255, 255, 255))
-        self.image.blit(text_surface, (0,19))
+
+
+
 
 class Town(Building):
     def __init__(self, grid_pos):
@@ -273,6 +361,7 @@ class Town(Building):
         super().draw()
         town_image = pygame.image.load("Resources/town.png")
         self.image.blit(town_image, (0, 0))
+        self.draw_parameter_for_visualisation()
 
 
     def generate_parameters(self):
@@ -295,8 +384,8 @@ class Village(Building):
     def draw(self):
         super().draw()
         village_image = pygame.image.load("Resources/village.png")
-        print("drawing in village")
         self.image.blit(village_image, (0, 0))
+        self.draw_parameter_for_visualisation()
 
     def generate_parameters(self):
         self.population = random.randint(25, 300)

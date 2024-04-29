@@ -29,9 +29,15 @@ class EditorUI(UI):
         surface = UiSurface(size=(300, 800), position=(500, 0), visible=False, name ="city_surface" )
         self.add_element(1,surface)
 
-    def open_hexes_list(self, name:str):
+    def close_hexes_list(self):
         if self.active_list:
             self.active_list.hide()
+            self.active_list = None
+
+        self.draw_elements()
+
+    def open_hexes_list(self, name:str):
+        self.close_hexes_list()
         button_list = self.find_element(name)
         button_list.make_visible()
         self.draw_elements()
@@ -41,7 +47,7 @@ class EditorUI(UI):
 
     def add_hexes_list(self):
         button_list = ButtonList(position=(200, 0), name="hex_types")
-        hexes_types = ["HexagonLand", "HexagonMountain", "HexagonSea", "HexagonEmpty"]
+        hexes_types = ["HexagonLand", "HexagonMountain", "HexagonSea", "HexagonEmpty", "HexagonForest", "HexagonSheep","HexagonWheat","HexagonGrape"]
         [button_list.add_element(hex_type, hex_type) for hex_type in hexes_types]
         self.add_element(0,button_list)
         button_list.hide()
@@ -50,6 +56,9 @@ class EditorUI(UI):
         button_list = ButtonList(position=(0, 0), name="editor_mods")
         modes = ["Hexes", "Rivers", "Roads", "Buildings", "None"]
         [button_list.add_element(mode, mode) for mode in modes]
+        button_list.elements_list[1].add_action(self.close_hexes_list, action_args=())
+        button_list.elements_list[2].add_action(self.close_hexes_list, action_args=())
+        button_list.elements_list[4].add_action(self.close_hexes_list, action_args=())
         button_list.elements_list[0].add_action(self.open_hexes_list,action_args=("hex_types",))
         button_list.elements_list[3].add_action(self.open_hexes_list, action_args=("towns",))
         self.add_element(0,button_list)

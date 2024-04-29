@@ -3,7 +3,7 @@ from math import sin, cos, sqrt, pi, floor
 import pygame
 
 from game_content.Sprites import HexagonLand, HexagonSea, HexagonMountain, HexagonEmpty, Hexagon, Town, \
-    OffsetCoordinates
+    OffsetCoordinates, HexagonForest, HexagonGrape, HexagonWheat, HexagonSheep
 
 
 class HexPointsStorage():
@@ -106,7 +106,6 @@ class HexesFactory():
             hex_type = hex_params["type"]
         else:
             hex_type = hex_params
-        hex_created = None
         match hex_type:
             case "HexagonLand":
                 hex_created = (HexagonLand(grid_pos, self.storage))
@@ -116,6 +115,16 @@ class HexesFactory():
                 hex_created = (HexagonMountain(grid_pos, self.storage))
             case "HexagonEmpty":
                 hex_created = (HexagonEmpty(grid_pos, self.storage))
+            case "HexagonForest":
+                hex_created = (HexagonForest(grid_pos, self.storage))
+            case "HexagonGrape":
+                hex_created = (HexagonGrape(grid_pos, self.storage))
+            case "HexagonSheep":
+                hex_created = (HexagonSheep(grid_pos, self.storage))
+            case "HexagonWheat":
+                hex_created = (HexagonWheat(grid_pos, self.storage))
+
+
             case _:
 
                 hex_created = (HexagonLand(grid_pos, self.storage))

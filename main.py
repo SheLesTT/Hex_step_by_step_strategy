@@ -70,6 +70,9 @@ def map_editor(file_to_load_from, rows=10, columns=10, new=False):
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     model.click_handler.handle_click(event)
 
+                elif event.type == MOUSEWHEEL:
+                    user_interface.check_scroll(event.y)
+
             clock.tick(60)
 
 
@@ -110,6 +113,8 @@ def offline_game(filename):
                 model.text_input_handler.handle_input(event)
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     model.click_handler.handle_click(event)
+                elif event.type == MOUSEWHEEL:
+                    UI.check_scroll(event.y)
 
             clock.tick(10)
 
