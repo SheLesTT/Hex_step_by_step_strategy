@@ -72,10 +72,11 @@ class UI:
         for layer in reversed(self.elements):
             for element in layer:
                 if element.visible and isinstance(element, Scrollable):
-                    element.check_scroll(scroll)
-                    element.draw(self.UI_surface)
-                    self.logger.info(f"UI element {element}, was scrolled")
-                    return True
+                    result =element.check_scroll(scroll)
+                    if result:
+                        element.draw(self.UI_surface)
+                        self.logger.info(f"UI element {element}, was scrolled")
+                        return result
 
 
 

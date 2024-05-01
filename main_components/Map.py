@@ -1,5 +1,6 @@
 import json
 from collections import deque, defaultdict
+from typing import List
 
 import pygame
 
@@ -38,7 +39,7 @@ class Map:
         self.rows = int(rows)
         self.columns = int(columns)
         self.file_to_load_from = file_to_load_from
-        self.hexes_factory = HexesFactory()
+        self.hexes_factory = HexesFactory(self)
         self.new = new
         self.hex_width = 30 * sqrt(3)
         self.buildings = []
@@ -168,13 +169,13 @@ class Map:
         hexes = HexesGroup()
         for i in range(self.rows):
             for j in range(self.columns):
-                hexes.add(self.hexes_factory.create_hex("HexagonEmpty", OffsetCoordinates(i, j)))
+                hexes.add(self.hexes_factory.create_hex("HexagonEmpty", OffsetCoordinates(i, j),))
         return hexes
 
     def check_coord_validity(self, cords: OffsetCoordinates):
         return 0 <= cords.row < self.rows and 0 <= cords.column < self.columns
 
-    def coordinate_range(self, hex, distance):
+    def coordinate_range(self, hex: Hexagon, distance: int) -> List[Hexagon]:
         hexes = []
         distance = int(distance)
         qs, rs, ss = map(int, self.get_cube_coords(hex))
@@ -185,9 +186,9 @@ class Map:
 
                     if q + r + s == 0 and q >= 0 and q < self.columns and r > -self.rows and s <= 0:
 
-                        hex = self.hexes[(q, r, s)]
-                        if hex:
-                            hexes.append(hex)
+                        hex_new = self.hexes[(q, r, s)]
+                        if hex_new and hex.grid_pos != hex_new.grid_pos:
+                            hexes.append(hex_new)
         return hexes
 
     def visualize_parameters(self, parameter: str ):
@@ -213,7 +214,6 @@ class Map:
         for building in self.buildings:
             total += building.building_on_hex.get_parameter(parameter)
         return total
-
 
 
 

@@ -163,6 +163,7 @@ class ButtonList(UI_Element, Scrollable):
                 self.upper_surf.fill(self.upper_surf_color)
                 self.upper_surf.blit(self.bottom_surf, (0, self.scroll))
                 [element.move_button(y * 10) for element in self.elements]
+            return True
 
     def check_click(self, mouse_pos: tuple[int, int]):
         for element in self.elements:
@@ -257,7 +258,6 @@ class ParametersSurface(UI_Element):
             label.draw(self.surface)
         display_surface.blit(self.surface, self.position)
     def add_lable(self,text, position, name):
-        print("adding label", text, position, name)
         self.labels[name] = Label(str(text), position, name)
     def check_click(self, mouse_pos: tuple[int, int]):
         pass    

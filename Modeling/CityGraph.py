@@ -11,34 +11,41 @@ class CityGraph:
         self.graph = game_map.create_graph()
         self.year = 1200
         self.medium_temperature = 15
+        self.first_pandemic = True
 
     def calculate_climate(self):
         if self.year < 1300:
-            self.medium_temperature -= 0.01
+            self.medium_temperature -= 0.05
         if self.year >= 1300 and self.year < 1350:
             temperature_delta = random.choice([0.01, 0, -0.01])
             self.medium_temperature += temperature_delta
-        if self.year >= 1350:
-            self.medium_temperature += 0.01
+        if self.year >= 1350 and self.year < 1400:
+            self.medium_temperature -= 0.05
+        this_year_temperature = self.medium_temperature + random.uniform(-0.7, 0.7)
+        return this_year_temperature
     def calculate_pandemic(self):
-        first_pandemic = True
-        if self.year == 1305:
-            if first_pandemic:
-                pandemic_severity = random.triangular(0.8, 0.9,0.1)
+        if self.year >= 1320 :
+            if self.first_pandemic:
+                if random.uniform(0, 1) < 0.03:
+                    self.first_pandemic = False
+                    pandemic_severity = random.triangular(0.8, 0.9,0.1)
+                    self.years_without_pandemic = 0
+                    return pandemic_severity
             else:
-                pandemic_severity = random.triangular(0.1, 0.2,0.5)
-            return pandemic_severity
+                self.years_without_pandemic += 1.
+                if self.years_without_pandemic > 20:
+                    if random.uniform(0, 1) < 0.03:
+                        pandemic_severity = random.triangular(0.1, 0.2,0.5)
+                        return pandemic_severity
         return 0
 
 
     def calculate(self):
-        i = 1
-        while i < 10:
-            print(i)
+        while self.year < 1210 :
             time.sleep(1)
-            i+=1
+            self.year+=1
             pandemic_severity = self.calculate_pandemic()
-            self.calculate_climate()
+            this_year_temperature = self.calculate_climate()
             for hex in self.game_map.hexes:
                 if isinstance(hex, HexagonWheat):
                     hex.produce()

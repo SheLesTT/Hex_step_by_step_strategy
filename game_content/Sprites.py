@@ -19,9 +19,10 @@ class OffsetCoordinates(NamedTuple):
 
 
 class MapObject(pygame.sprite.Sprite):
-    def __init__(self, grid_pos):
+    def __init__(self, grid_pos, game_map):
         super().__init__()
         self.grid_pos = grid_pos
+        self.game_map = game_map
         self.width = 25
         self.height = 25
         self.name = "map object"
@@ -57,11 +58,12 @@ class MapObject(pygame.sprite.Sprite):
 
 
 class Hexagon(MapObject):
-    def __init__(self, grid_pos, points_storage, color=(30, 70, 50), width=hex_width, height=hex_height):
+    def __init__(self, grid_pos, points_storage,game_map, color=(30, 70, 50), width=hex_width, height=hex_height):
 
-        super().__init__(grid_pos)
+        super().__init__(grid_pos, game_map)
         self.grid_pos = grid_pos
         self.points_storage = points_storage
+        self.game_map = game_map
         self.color = color
         self.width = width
         self.height = height
@@ -75,6 +77,7 @@ class Hexagon(MapObject):
         self.roads = [False] * 7
         self.directions = {0: pygame.Vector3(1, 0, -1), 1: pygame.Vector3(0, 1, -1), 2: pygame.Vector3(-1, 1, 0),
                            3: pygame.Vector3(-1, 0, 1), 4: pygame.Vector3(0, -1, 1), 5: pygame.Vector3(1, -1, -0)}
+        self.village_territory = False
 
         self.neighbours = [None] * 6
         self.unit_on_hex = None
@@ -99,7 +102,7 @@ class Hexagon(MapObject):
         return str((self.grid_pos.row, self.grid_pos.column)), hex_dict
 
     def __repr__(self):
-        return f"{self.__class__.__name__}"
+        return f"{self.type}, {self.grid_pos[0]}, {self.grid_pos[1]}"
 
     def add_unit(self, unit):
         self.unit_on_hex = unit
@@ -120,6 +123,7 @@ class Hexagon(MapObject):
         pass
 
     def draw(self):
+        print('this is color ', self.color)
         pygame.draw.polygon(self.image, self.color, self.points_storage.points)
         for idx, river in enumerate(self.rivers):
             if river:
@@ -211,8 +215,8 @@ class Hexagon(MapObject):
 
 
 class HexagonLand(Hexagon):
-    def __init__(self, grid_pos, game_map, color=(30, 70, 50), width=hex_width, height=hex_height):
-        super().__init__(grid_pos, game_map, color, width=hex_width, height=hex_height)
+    def __init__(self, grid_pos,points_storage, game_map, color=(30, 70, 50), width=hex_width, height=hex_height):
+        super().__init__(grid_pos,points_storage, game_map, color, width=hex_width, height=hex_height)
         self.color = color
         self.type = "HexagonLand"
         self.fertility = 100
@@ -220,31 +224,31 @@ class HexagonLand(Hexagon):
 
 
 class HexagonMountain(Hexagon):
-    def __init__(self, grid_pos, game_map, color=(255, 255, 255), width=hex_width, height=hex_height):
-        super().__init__(grid_pos, game_map, color, width=hex_width, height=hex_height)
+    def __init__(self, grid_pos, points_storage, game_map, color=(255, 255, 255), width=hex_width, height=hex_height):
+        super().__init__(grid_pos,points_storage, game_map, color, width=hex_width, height=hex_height)
         self.color = color
         self.type = "HexagonMountain"
         self.draw()
 
 
 class HexagonSea(Hexagon):
-    def __init__(self, grid_pos, game_map, color=(83, 236, 236), width=hex_width, height=hex_height):
-        super().__init__(grid_pos, game_map, color, width=hex_width, height=hex_height)
+    def __init__(self, grid_pos,points_storage, game_map, color=(83, 236, 236), width=hex_width, height=hex_height):
+        super().__init__(grid_pos, points_storage, game_map, color, width=hex_width, height=hex_height)
         self.color = color
         self.type = "HexagonSea"
         self.draw()
 
 
 class HexagonEmpty(Hexagon):
-    def __init__(self, grid_pos, game_map, color=(0, 0, 0), width=hex_width, height=hex_height):
-        super().__init__(grid_pos, game_map, color, width=hex_width, height=hex_height)
+    def __init__(self, grid_pos, points_storage, game_map, color=(0, 0, 0), width=hex_width, height=hex_height):
+        super().__init__(grid_pos, points_storage, game_map,     color, width=hex_width, height=hex_height)
         self.color = color
         self.type = "HexagonEmpty"
         self.draw()
 
 class HexagonForest(HexagonLand):
-    def __init__(self, grid_pos, game_map, color=(30, 70, 50), width=hex_width, height=hex_height):
-        super().__init__(grid_pos, game_map, color, width=hex_width, height=hex_height)
+    def __init__(self, grid_pos, points_storage, game_map, color=(30, 70, 50), width=hex_width, height=hex_height):
+        super().__init__(grid_pos,points_storage, game_map, color, width=hex_width, height=hex_height)
         self.color = color
         self.type = "HexagonForest"
         self.draw()
@@ -332,7 +336,7 @@ class Building(MapObject):
         self.statistics = {"population": [self.population], "food": [self.food], "goods": [self.goods]}
     def save_to_json(self):
         print("in buildings save to json")
-        return {"name": str(self.name), "data": {"population": self.population, "cattle": self.cattle}}
+        return {"name": str(self.name), "data": {"population": self.population, "food": self.food, "goods": self.goods}}
     def draw(self):
         self.image = pygame.Surface((hex_width, hex_height), pygame.SRCALPHA)
 
@@ -383,13 +387,18 @@ class Town(Building):
 
     def consume(self):
         self.food -= self.population
+# class VillageTileManager:
+#     def __init__(self, territories):
 
 
 class Village(Building):
-    def __init__(self, grid_pos):
+    def __init__(self, grid_pos, available_territories):
         super().__init__(grid_pos)
         self.name= "Village"
+        self.available_territories = available_territories
+        self.population = 100
         self.draw()
+        self.create_initial_territories()
 
     def draw(self):
         super().draw()
@@ -401,6 +410,14 @@ class Village(Building):
         self.population = random.randint(25, 300)
         self.goods = random.randint(50, 100)
         self.food = random.randint(50, 100)
+    def create_initial_territories(self):
+        crops_phields = math.ceil(self.population // 90) + 1
+        if crops_phields > 4:
+            crops_phields = 4
+        for i in range(crops_phields):
+            hex_to_change = random.choice(self.neighbours)
+            self.game_map.change_hex("WheatHexagon", hex_to_change)
+
 
     def produce(self):
         self.food = self.population * 2

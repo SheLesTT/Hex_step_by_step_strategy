@@ -2,6 +2,7 @@ from threading import Thread
 import time
 from pygame.locals import *
 import logging.config
+from UI_staff.UI_surfaces.statisticsUI import StatisticsUI
 from main_components.Map import Map
 from main_components.MapEditorMouseClickHandler import MapEditorMouseClickHandler
 from main_components.Render import Render
@@ -55,11 +56,7 @@ def map_editor(file_to_load_from, rows=10, columns=10, new=False):
     def run_model(model, ):
         nonlocal run
         while run:
-
             events_list = pygame.event.get()
-            model.game_map.hexes.update()
-            model.renderer.display(events_list, model.game_map)
-            pygame.display.flip()
 
             for event in events_list:
                 if event.type == QUIT:
@@ -71,7 +68,12 @@ def map_editor(file_to_load_from, rows=10, columns=10, new=False):
                     model.click_handler.handle_click(event)
 
                 elif event.type == MOUSEWHEEL:
-                    user_interface.check_scroll(event.y)
+                    if user_interface.check_scroll(event.y):
+                        events_list.remove(event)
+
+            model.game_map.hexes.update()
+            model.renderer.display(events_list, model.game_map)
+            pygame.display.flip()
 
             clock.tick(60)
 
@@ -219,7 +221,7 @@ def edit_model_loader():
 def statistics():
     run = True
 
-    UI = ChooseSavedModelUI(window_size)
+    UI =  StatisticsUI(window_size)
 
     def stop_menue():
         nonlocal run
@@ -227,22 +229,8 @@ def statistics():
 
     screen.fill((255, 255, 255))
 
-    def start_editor():
-        filename = UI["map_saves"].selected_element
-        map_editor(filename)
-
-    def create_new_map_for_editing():
-        filename = UI["input_model_name"].text
-        rows = UI["input_rows"].text
-        columns = UI["input_columns"].text
-        map_editor(filename, rows, columns, new=True)
 
     UI["exit"].add_action(stop_menue)
-    UI["load_map"].add_action(start_editor)
-    UI["start_simulation"].add_action(create_new_map_for_editing)
-
-    text_handler = TextInputHandler(UI)
-    UI.subscribe_text_elements(text_handler)
 
     while run:
 
@@ -262,9 +250,6 @@ def statistics():
                     UI.check_click(pos)
                 elif event.type == MOUSEWHEEL:
                     UI.check_scroll(event.y)
-                else:
-                    text_handler.handle_input(event)
-            UI.refresh_button_list()
 
 def game_menu():
     global running
@@ -283,7 +268,7 @@ def game_menu():
 
     map_editor_button = MenuButton("Map Editor", 300, 100, button_dimensions=button_dimensions,
                                    action=edit_model_loader, color=(0, 0, 255), font_size=24, font_name="Arial")
-    statistics_button = MenuButton("Map Editor", 300, 400, button_dimensions=button_dimensions,
+    statistics_button = MenuButton("Statistics", 300, 400, button_dimensions=button_dimensions,
                                    action=statistics, color=(0, 0, 255), font_size=24, font_name="Arial")
     buttons = [offline_game_button, exit_button, map_editor_button, statistics_button]
 

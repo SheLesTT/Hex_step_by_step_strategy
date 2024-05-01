@@ -3,11 +3,11 @@ from math import sin, cos, sqrt, pi, floor
 import pygame
 
 from game_content.Sprites import HexagonLand, HexagonSea, HexagonMountain, HexagonEmpty, Hexagon, Town, \
-    OffsetCoordinates, HexagonForest, HexagonGrape, HexagonWheat, HexagonSheep
+    OffsetCoordinates, HexagonForest, HexagonGrape, HexagonWheat, HexagonSheep, Village
 
 
 class HexPointsStorage():
-    def __init__(self):
+    def __init__(self,):
 
 
         self.hex_side = 15 * sqrt(3)
@@ -98,8 +98,9 @@ class HexPointsStorage():
 
 
 class HexesFactory():
-    def __init__(self, ):
+    def __init__(self, game_map):
         self.storage = HexPointsStorage()
+        self.game_map = game_map
 
     def create_hex(self, hex_params: str | dict, grid_pos: OffsetCoordinates) -> Hexagon:
         if isinstance(hex_params, dict):
@@ -108,21 +109,21 @@ class HexesFactory():
             hex_type = hex_params
         match hex_type:
             case "HexagonLand":
-                hex_created = (HexagonLand(grid_pos, self.storage))
+                hex_created = (HexagonLand(grid_pos, self.storage, self.game_map))
             case "HexagonSea":
-                hex_created = (HexagonSea(grid_pos, self.storage))
+                hex_created = (HexagonSea(grid_pos, self.storage, self.game_map))
             case "HexagonMountain":
-                hex_created = (HexagonMountain(grid_pos, self.storage))
+                hex_created = (HexagonMountain(grid_pos, self.storage, self.game_map))
             case "HexagonEmpty":
-                hex_created = (HexagonEmpty(grid_pos, self.storage))
+                hex_created = (HexagonEmpty(grid_pos, self.storage, game_map=self.game_map))
             case "HexagonForest":
-                hex_created = (HexagonForest(grid_pos, self.storage))
+                hex_created = (HexagonForest(grid_pos, self.storage, self.game_map))
             case "HexagonGrape":
-                hex_created = (HexagonGrape(grid_pos, self.storage))
+                hex_created = (HexagonGrape(grid_pos, self.storage, self.game_map))
             case "HexagonSheep":
-                hex_created = (HexagonSheep(grid_pos, self.storage))
+                hex_created = (HexagonSheep(grid_pos, self.storage, self.game_map))
             case "HexagonWheat":
-                hex_created = (HexagonWheat(grid_pos, self.storage))
+                hex_created = (HexagonWheat(grid_pos, self.storage, self.game_map))
 
 
             case _:
@@ -145,19 +146,20 @@ class HexesFactory():
     def add_building(self, hex_created: Hexagon, building: dict,) -> None:
         match building["name"]:
             case "Town":
-                data = building["data"]
-
-                town = Town(hex_created.grid_pos)
-                town.population = data["population"]
-                town.cattle = data["cattle"]
-                hex_created.building_on_hex = town
-
+                created_building = Town(hex_created.grid_pos)
+            case "Village":
+                available_hexes = self.game_map.coordinate_range(hex_created.grid_pos, 1)
+                created_building = Village(hex_created.grid_pos, available_hexes)
             case _:
                 pass
+        data = building["data"]
+        created_building.population = data["population"]
+        created_building.food = data["food"]
+        created_building.goods = data["goods"]
+        hex_created.building_on_hex = created_building
 
     def replace_hex(self, hex_type: str, grid_pos: OffsetCoordinates, old_hex: Hexagon) -> Hexagon:
         print("Old hex", old_hex, "Building on hex", old_hex.building_on_hex)
-        old_hex
         hex_created = self.create_hex(hex_type, grid_pos)
         hex_created.rivers = old_hex.rivers
         hex_created.roads = old_hex.roads
