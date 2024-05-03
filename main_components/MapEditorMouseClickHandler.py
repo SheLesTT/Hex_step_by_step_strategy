@@ -101,12 +101,12 @@ class MapEditorMouseClickHandler(MapMouseClickHandler):
             self.actions_list.append(ActionRecord(sprite_clicked.grid_pos, "river", triangle, True))
 
     def add_building(self, sprite_clicked, building_type, undoing=False):
-        print(sprite_clicked.grid_pos, sprite_clicked.game_map, "this is  it")
-        available_hexes = sprite_clicked.game_map.coordinate_range(sprite_clicked.grid_pos, 1)
+        game_map = sprite_clicked.game_map
+        available_hexes = game_map.coordinate_range(sprite_clicked, 1)
         if building_type == "Town":
-            building = Town(sprite_clicked.grid_pos)
+            building = Town(sprite_clicked.grid_pos,game_map)
         if building_type == "Village":
-            building = Village(sprite_clicked.grid_pos, available_hexes)
+            building = Village(sprite_clicked.grid_pos, game_map)
 
         sprite_clicked.add_building(building)
         if not undoing:

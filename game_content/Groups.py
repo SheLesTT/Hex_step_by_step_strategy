@@ -32,8 +32,7 @@ class HexesGroup(pygame.sprite.Group):
 
     def get_hex_cube_coords(self, hex):
 
-        cube_pos = self.hexes_dict.get_keys(hex)
-        print('this is my cube pos ', cube_pos, type(cube_pos))
+        cube_pos = self.hexes_dict.get_keys(hex)[1]
         return cube_pos
 
 

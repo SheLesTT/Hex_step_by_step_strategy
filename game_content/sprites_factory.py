@@ -102,7 +102,7 @@ class HexesFactory():
         self.storage = HexPointsStorage()
         self.game_map = game_map
 
-    def create_hex(self, hex_params: str | dict, grid_pos: OffsetCoordinates) -> Hexagon:
+    def create_hex(self, hex_params: str | dict, grid_pos: OffsetCoordinates,loading=False) -> Hexagon:
         if isinstance(hex_params, dict):
             hex_type = hex_params["type"]
         else:
@@ -131,25 +131,24 @@ class HexesFactory():
                 hex_created = (HexagonLand(grid_pos, self.storage))
 
         if isinstance(hex_params, dict):
-            self.add_items_on_hex(hex_created, hex_params)
+            self.add_items_on_hex(hex_created, hex_params,loading=loading)
         return hex_created
 
-    def add_items_on_hex(self, hex_created: Hexagon, hex_params: dict) -> None:
+    def add_items_on_hex(self, hex_created: Hexagon, hex_params: dict,loading=False) -> None:
         if hex_params["building_on_hex"]:
-            self.add_building(hex_created, hex_params["building_on_hex"])
+            self.add_building(hex_created, hex_params["building_on_hex"],loading)
         if hex_params["roads"]:
             hex_created.roads = hex_params["roads"]
         if hex_params["rivers"]:
             hex_created.rivers = hex_params["rivers"]
 
 
-    def add_building(self, hex_created: Hexagon, building: dict,) -> None:
+    def add_building(self, hex_created: Hexagon, building: dict,loading=False) -> None:
         match building["name"]:
             case "Town":
-                created_building = Town(hex_created.grid_pos)
+                created_building = Town(hex_created.grid_pos, self.game_map)
             case "Village":
-                available_hexes = self.game_map.coordinate_range(hex_created.grid_pos, 1)
-                created_building = Village(hex_created.grid_pos, available_hexes)
+                created_building = Village(hex_created.grid_pos, self.game_map, loading=loading)
             case _:
                 pass
         data = building["data"]

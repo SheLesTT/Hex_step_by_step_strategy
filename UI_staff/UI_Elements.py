@@ -301,7 +301,7 @@ class UiSurface(UI_Element, TextObservable):
 
         self.city = city
         self.find_element("population").text = str(city.population)
-        self.find_element("cattle").text = str(city.cattle)
+        self.find_element("food").text = str(city.food)
 
     def hide(self):
         self.notify_observers(-1)

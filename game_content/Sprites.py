@@ -1,4 +1,5 @@
 import math
+import queue
 import random
 from abc import ABC
 from math import cos, sin, pi, sqrt
@@ -103,6 +104,7 @@ class Hexagon(MapObject):
 
     def __repr__(self):
         return f"{self.type}, {self.grid_pos[0]}, {self.grid_pos[1]}"
+
 
     def add_unit(self, unit):
         self.unit_on_hex = unit
@@ -219,7 +221,6 @@ class HexagonLand(Hexagon):
         super().__init__(grid_pos,points_storage, game_map, color, width=hex_width, height=hex_height)
         self.color = color
         self.type = "HexagonLand"
-        self.fertility = 100
         self.draw()
 
 
@@ -256,24 +257,37 @@ class HexagonForest(HexagonLand):
         super().draw()
         forest_image = pygame.image.load("Resources/forest.png")
         self.image.blit(forest_image, (9, 5))
-class HexagonWheat(HexagonLand):
-    def __init__(self, grid_pos, game_map, color=(30, 70, 50), width=hex_width, height=hex_height):
+class HexagonWheat(Hexagon):
+    def __init__(self, grid_pos, points_storage, game_map, color=(30, 70, 50), width=hex_width, height=hex_height):
         self.fertility_colors = {"maximum":(76,183,27), "medium":(130,203,69), "low":(199,134,70), "minimum":(135,147,1)}
-        super().__init__(grid_pos, game_map, color, width=hex_width, height=hex_height)
+        super().__init__(grid_pos,points_storage, game_map, color, width=hex_width, height=hex_height)
         self.color = color
         self.type = "HexagonWheat"
+
+        self.fertility = 100
+        self.mods_list = {'wheat':"Resources/wheat.png", 'barley':"Resources/grape.png", 'rest':"Resources/sheep.png"}
+        self.mods = queue.Queue()
+        self.current_mod = 'wheat'
+        [self.mods.put(mod) for mod in self.mods_list.keys()]
         self.draw()
         self.check_fertility()
         self.producing = True
-    def draw(self):
+    def draw(self, ):
         super().draw()
-        forest_image = pygame.image.load("Resources/wheat.png")
+        forest_image = pygame.image.load(self.mods_list[self.current_mod])
         self.image.blit(forest_image, (9, 5))
+    def change_planted_culture(self,culture = ''):
+        if culture == '':
+            self.current_mod = self.mods.get()
+            self.mods.put(self.current_mod)
+        self.draw()
+
 
     def produce(self, modifier=1):
         production = 1000*modifier*self.fertility
         self.change_fertility()
         self.check_fertility()
+        self.change_planted_culture()
         return production
 
     def change_fertility(self, modifier=1):
@@ -304,8 +318,8 @@ class HexagonWheat(HexagonLand):
 
 
 class HexagonSheep(HexagonLand):
-    def __init__(self, grid_pos, game_map, color=(30, 70, 50), width=hex_width, height=hex_height):
-        super().__init__(grid_pos, game_map, color, width=hex_width, height=hex_height)
+    def __init__(self, grid_pos, points_storage, game_map, color=(30, 70, 50), width=hex_width, height=hex_height):
+        super().__init__(grid_pos,points_storage, game_map, color, width=hex_width, height=hex_height)
         self.color = color
         self.type = "HexagonSheep"
         self.draw()
@@ -315,8 +329,8 @@ class HexagonSheep(HexagonLand):
         self.image.blit(forest_image, (9, 5))
 
 class HexagonGrape(HexagonLand):
-    def __init__(self, grid_pos, game_map, color=(30, 70, 50), width=hex_width, height=hex_height):
-        super().__init__(grid_pos, game_map, color, width=hex_width, height=hex_height)
+    def __init__(self, grid_pos,points_storage, game_map, color=(30, 70, 50), width=hex_width, height=hex_height):
+        super().__init__(grid_pos,points_storage, game_map, color, width=hex_width, height=hex_height)
         self.color = color
         self.type = "HexagonGrape"
         self.draw()
@@ -325,8 +339,8 @@ class HexagonGrape(HexagonLand):
         forest_image = pygame.image.load("Resources/grape.png")
         self.image.blit(forest_image, (9, 5))
 class Building(MapObject):
-    def __init__(self, grid_pos):
-        super().__init__(grid_pos)
+    def __init__(self, grid_pos, game_map):
+        super().__init__(grid_pos,game_map)
         self.name = "building"
         self.population = 123
         self.food = 0
@@ -366,8 +380,8 @@ class Building(MapObject):
 
 
 class Town(Building):
-    def __init__(self, grid_pos):
-        super().__init__(grid_pos)
+    def __init__(self, grid_pos, game_map):
+        super().__init__(grid_pos, game_map)
         self.name = "Town"
         self.draw()
 
@@ -392,31 +406,54 @@ class Town(Building):
 
 
 class Village(Building):
-    def __init__(self, grid_pos, available_territories):
-        super().__init__(grid_pos)
+    def __init__(self, grid_pos, game_map, loading=False):
+        super().__init__(grid_pos, game_map)
         self.name= "Village"
-        self.available_territories = available_territories
         self.population = 100
+        self.forest_area = 99
+        self.pastures_area = 99
+        self.generate_parameters()
         self.draw()
-        self.create_initial_territories()
+        if not loading:
+            self.initialize()
+            self.create_initial_territories()
 
+    def generate_parameters(self):
+        self.population = random.randint( 50 , 360)
+        self.forest_area= random.randint(25,  149)
+        self.pastures_area = random.randint(25, 149)
+
+    def initialize(self):
+        self.available_territories = []
+        hexes_in_range = self.game_map.coordinate_range(self.game_map.hexes[self.grid_pos], 2)
+        for hex in hexes_in_range:
+            if isinstance(hex, (HexagonEmpty, HexagonLand)):
+                self.available_territories.append(hex)
     def draw(self):
         super().draw()
         village_image = pygame.image.load("Resources/village.png")
         self.image.blit(village_image, (0, 0))
         self.draw_parameter_for_visualisation()
 
-    def generate_parameters(self):
-        self.population = random.randint(25, 300)
-        self.goods = random.randint(50, 100)
-        self.food = random.randint(50, 100)
     def create_initial_territories(self):
-        crops_phields = math.ceil(self.population // 90) + 1
+        print("in create initial territories")
+        crops_phields = math.ceil(self.population / 90)
         if crops_phields > 4:
             crops_phields = 4
-        for i in range(crops_phields):
-            hex_to_change = random.choice(self.neighbours)
-            self.game_map.change_hex("WheatHexagon", hex_to_change)
+        for i in range(crops_phields * 3 ):
+            hex_to_change = random.choice(self.available_territories)
+            self.available_territories.remove(hex_to_change)
+            self.game_map.change_hex("HexagonWheat", hex_to_change.grid_pos)
+        forests = math.ceil(self.forest_area / 50)
+        pastures = math.ceil(self.pastures_area / 50)
+        for i in range(forests):
+            hex_to_change = random.choice(self.available_territories)
+            self.available_territories.remove(hex_to_change)
+            self.game_map.change_hex("HexagonForest", hex_to_change.grid_pos)
+        for i in range(pastures):
+            hex_to_change = random.choice(self.available_territories)
+            self.available_territories.remove(hex_to_change)
+            self.game_map.change_hex("HexagonSheep", hex_to_change.grid_pos)
 
 
     def produce(self):
