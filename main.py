@@ -45,7 +45,6 @@ def map_editor(file_to_load_from, rows=10, columns=10, new=False):
         run = False
 
     game_map = Map(file_to_load_from, rows, columns, new)
-    print("game map ", game_map)
     user_interface = EditorUI(window_size, game_map)
     user_interface.find_element("exit").add_action(stop_run, ())
     model = Model(game_map, user_interface)

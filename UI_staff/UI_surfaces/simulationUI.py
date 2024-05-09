@@ -78,7 +78,6 @@ class SimUI(UI):
     def visualize_param(self, parameter = None):
         self.game_map.visualize_parameters(parameter)
     def add_surface(self):
-        print("Calling add surface")
         surface = UiSurface(size=(300,800), position=(500,0),visible=False)
         surface.name = "city_surface"
         self.add_element(1,surface)

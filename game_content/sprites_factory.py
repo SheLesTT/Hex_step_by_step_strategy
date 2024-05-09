@@ -103,10 +103,7 @@ class HexesFactory():
         self.game_map = game_map
 
     def create_hex(self, hex_params: str | dict, grid_pos: OffsetCoordinates,loading=False) -> Hexagon:
-        if isinstance(hex_params, dict):
-            hex_type = hex_params["type"]
-        else:
-            hex_type = hex_params
+        hex_type = hex_params["type"]
         match hex_type:
             case "HexagonLand":
                 hex_created = (HexagonLand(grid_pos, self.storage, self.game_map))
@@ -123,23 +120,24 @@ class HexesFactory():
             case "HexagonSheep":
                 hex_created = (HexagonSheep(grid_pos, self.storage, self.game_map))
             case "HexagonWheat":
-                hex_created = (HexagonWheat(grid_pos, self.storage, self.game_map))
+                fertility = hex_params.get('fertility')
+                mod = hex_params.get('mod')
+                hex_created = (HexagonWheat(grid_pos, self.storage, self.game_map, fertility, mod))
 
 
             case _:
 
-                hex_created = (HexagonLand(grid_pos, self.storage))
+                hex_created = (HexagonLand(grid_pos, self.storage, self.game_map))
 
-        if isinstance(hex_params, dict):
-            self.add_items_on_hex(hex_created, hex_params,loading=loading)
+        self.add_items_on_hex(hex_created, hex_params,loading=loading)
         return hex_created
 
     def add_items_on_hex(self, hex_created: Hexagon, hex_params: dict,loading=False) -> None:
-        if hex_params["building_on_hex"]:
+        if hex_params.get("building_on_hex"):
             self.add_building(hex_created, hex_params["building_on_hex"],loading)
-        if hex_params["roads"]:
+        if hex_params.get("roads"):
             hex_created.roads = hex_params["roads"]
-        if hex_params["rivers"]:
+        if hex_params.get("rivers"):
             hex_created.rivers = hex_params["rivers"]
 
 
@@ -158,12 +156,9 @@ class HexesFactory():
         hex_created.building_on_hex = created_building
 
     def replace_hex(self, hex_type: str, grid_pos: OffsetCoordinates, old_hex: Hexagon) -> Hexagon:
-        print("Old hex", old_hex, "Building on hex", old_hex.building_on_hex)
-        hex_created = self.create_hex(hex_type, grid_pos)
-        hex_created.rivers = old_hex.rivers
-        hex_created.roads = old_hex.roads
-        if old_hex.building_on_hex:
-            hex_created.add_building(old_hex.building_on_hex)
+        hex_save = old_hex.save_to_json()
+        hex_save.update({'type':hex_type})
+        hex_created = self.create_hex(hex_save, grid_pos)
         hex_created.neighbours = old_hex.neighbours
         for direction, neighbour in enumerate(hex_created.neighbours):
             reversed_direction =  (direction+ 3) % 6

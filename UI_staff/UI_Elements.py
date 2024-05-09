@@ -210,7 +210,6 @@ class TextInput(UI_Element, TextObservable):
         if self.abs_rect.collidepoint(mouse_pos):
             if self.editable:
                 self.active = True
-                print("notifying observers")
                 self.notify_observers()
             return self
 
@@ -221,7 +220,6 @@ class TextInput(UI_Element, TextObservable):
         self.observers.remove(observer)
 
     def notify_observers(self, message=None):
-        print("Observers in notify observers", self.observers)
         for observer in self.observers:
             if not message:
                 observer.update(self)

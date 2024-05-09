@@ -3,7 +3,7 @@ import os
 
 from UI_staff.UI import UI
 from UI_staff.UI_Elements import MenuButton, ButtonList
-from stats_graph_builder import StatsGraphBuilder
+from StatsGraphBuilder import StatsGraphBuilder
 
 
 class StatisticsUI(UI):
@@ -17,7 +17,6 @@ class StatisticsUI(UI):
         with open("statistics.json", "r") as f:
             statistics = json.load(f)
         building = list(statistics.keys() )
-        print(building, "This is the building")
         parameters = statistics[building[0]].keys()
         self.init_buttons()
         self.add_buildings_list(building)

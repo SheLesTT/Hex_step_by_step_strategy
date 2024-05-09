@@ -111,7 +111,6 @@ class Map:
             hexes_json = map_json["map"]
         for grid_pos, hex_params in hexes_json.items():
             grid_pos = OffsetCoordinates(*list(map(int, grid_pos[1:-1].split(","))))
-
             hex_created = self.create_hex(hex_params, grid_pos, loading=True)
             hex_created.draw()
             hexes.add(hex_created)
@@ -127,14 +126,15 @@ class Map:
 
         map_dict = {}
         for hex in self.hexes:
-            grid_pos, d = hex.save_to_json()
-            map_dict[grid_pos] = d
+            d = hex.save_to_json()
+            print('hex', hex, 'dictionary',d)
+            map_dict[str(hex.grid_pos)] = d
         final_dict = {"meta_info":{"rows":self.rows, "columns" :self.columns}, "map": map_dict}
         with open("./model_saves/" + self.file_to_load_from, "w") as f:
             json.dump(final_dict, f, sort_keys=True, indent=4)
 
-    def create_hex(self, type: str, grid_pos: OffsetCoordinates, loading=False) -> Hexagon:
-        hex_created = self.hexes_factory.create_hex(type, grid_pos,loading=loading)
+    def create_hex(self, hex_params: dict, grid_pos: OffsetCoordinates, loading=False) -> Hexagon:
+        hex_created = self.hexes_factory.create_hex(hex_params, grid_pos,loading=loading)
         return hex_created
 
     def set_hex(self, hexagon):
@@ -145,6 +145,7 @@ class Map:
         hex_created = self.hexes_factory.replace_hex(hex_type, grid_pos, old_hex)
 
         self.hexes[grid_pos] = hex_created
+        return hex_created
 
     def find_neighbours(self, ):
         for hex in self.hexes:
@@ -158,7 +159,6 @@ class Map:
         return False
 
     def get_cube_coords(self, hex):
-        print('this is map', hex)
         return self.hexes.get_hex_cube_coords(hex)
 
     def calculate_distance(self, hex1, hex2):
@@ -174,7 +174,7 @@ class Map:
         hexes = HexesGroup()
         for i in range(self.rows):
             for j in range(self.columns):
-                hexes.add(self.hexes_factory.create_hex("HexagonEmpty", OffsetCoordinates(i, j),))
+                hexes.add(self.hexes_factory.create_hex({'type':"HexagonEmpty"}, OffsetCoordinates(i, j),))
         self.hexes = hexes
     def check_coord_validity(self, cords: OffsetCoordinates):
         return 0 <= cords.row < self.rows and 0 <= cords.column < self.columns
@@ -182,7 +182,6 @@ class Map:
     def coordinate_range(self, hex: Hexagon, distance: int) -> List[Hexagon]:
         hexes = []
         distance = int(distance)
-        print("it is my hex", hex)
         qs, rs, ss = map(int, self.get_cube_coords(hex))
         for q in range(qs - distance, qs + distance + 1):
 
