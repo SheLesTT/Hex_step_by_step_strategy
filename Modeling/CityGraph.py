@@ -41,8 +41,10 @@ class CityGraph:
 
 
     def calculate(self):
-        while self.year < 1210 :
-            time.sleep(1)
+        years = 0
+        while self.year < 1500 :
+            years += 1
+            time.sleep(0.01)
             self.year+=1
             pandemic_severity = self.calculate_pandemic()
             this_year_temperature = self.calculate_climate()
@@ -53,7 +55,7 @@ class CityGraph:
                 city.yearly_calculation(pandemic_severity)
             self.game_map.draw_buildings()
             self.game_map.calculate_global_parameters()
-        self.game_map.write_statistics_to_file()
+        self.game_map.write_statistics_to_file(years)
 
 
 

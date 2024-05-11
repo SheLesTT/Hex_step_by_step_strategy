@@ -2,6 +2,7 @@ import math
 import queue
 import random
 from abc import ABC
+from dataclasses import dataclass
 from math import cos, sin, pi, sqrt
 from typing import NamedTuple
 
@@ -294,7 +295,7 @@ class HexagonWheat(Hexagon):
         self.image.blit(forest_image, (9, 5))
 
     def create_fertility(self):
-        return random.uniform(50, 100)
+        return random.uniform(0.5, 1)
 
     def change_mod(self, culture=''):
         if culture in self.mods_list.keys():
@@ -306,13 +307,13 @@ class HexagonWheat(Hexagon):
             self.mods.put(self.current_mod)
         self.draw()
 
-    def produce(self, modifier=1):
+    def produce(self, modifier=1) -> dict:
         production = None
         if self.current_mod == 'rest':
-            production = None
+            production = {}
         if self.current_mod == 'wheat':
             production = 1000 * modifier * self.fertility
-            production = {'what':production}
+            production = {'wheat':production}
         if self.current_mod == 'barley':
             production = 1000 * modifier * self.fertility
             production = {'barley':production}
@@ -324,9 +325,9 @@ class HexagonWheat(Hexagon):
     def change_fertility(self, modifier=1):
         if self.current_mod != 'rest':
             if self.fertility > 0:
-                self.fertility -= 10
+                self.fertility -= 0.1
         else:
-            self.fertility += 20
+            self.fertility += 0.2
 
     def stop_producing(self):
         self.producing = False
@@ -336,13 +337,13 @@ class HexagonWheat(Hexagon):
 
     def check_fertility(self):
         new_color = self.color
-        if 80 < self.fertility <= 100:
+        if 0.80 < self.fertility <= 1:
             new_color = self.fertility_colors["maximum"]
-        elif 55 < self.fertility <= 80:
+        elif 0.55 < self.fertility <= 0.80:
             new_color = self.fertility_colors["medium"]
-        elif 20 < self.fertility <= 55:
+        elif 0.20 < self.fertility <= 0.55:
             new_color = self.fertility_colors["low"]
-        elif 0 <= self.fertility <= 20:
+        elif 0 <= self.fertility <= 0.20:
             new_color = self.fertility_colors["minimum"]
         if new_color != self.color:
             self.color = new_color
@@ -389,8 +390,9 @@ class Building(MapObject):
         self.food = 0
         self.goods = 0
         self.parameter_for_visualisation = None
+        self.storage = ProductionStorage(sheep=0, pigs=0, wheat=0, barley=0)
         self.draw()
-        self.statistics = {"population": [self.population], "food": [self.food], "goods": [self.goods]}
+        self.statistics = {"population": [], "food": [], "goods": []}
 
     def save_to_json(self):
         return {"name": str(self.name), "data": {"population": self.population, "food": self.food, "goods": self.goods}}
@@ -410,15 +412,25 @@ class Building(MapObject):
 
     def collect_statistics(self):
         self.statistics["population"].append(self.population)
-        self.statistics["food"].append(self.food)
-        self.statistics["goods"].append(self.goods)
+        for key, value in self.storage.__dict__.items():
+            if self.statistics.get(key):
+                self.statistics[key].append(value)
+            else:
+                self.statistics[key] = [value]
 
     def yearly_calculation(self, pandemic_severity):
+        self.produce()
+        try:
+            self.storage.consume_production({'wheat': self.population *40, 'barley': self.population * 10})
+        except ValueError as e:
+            self.population -=10
         self.population = int(
             self.population - self.population * (0.5 * pandemic_severity * random.triangular(0.8, 0.9, 1.1)))
-        self.population += 1
+        self.population += 5
         self.collect_statistics()
-
+    def produce(self):
+        print("produce")
+        pass
     def change_visualization_parameter(self, parameter: str):
         self.parameter_for_visualisation = parameter
         self.draw()
@@ -449,6 +461,30 @@ class Town(Building):
 
 # class VillageTileManager:
 #     def __init__(self, territories):
+@dataclass
+class ProductionStorage:
+    sheep: int
+    pigs: int
+    wheat: int
+    barley: int
+    def __getitem__(self, item):
+        return self.__dict__.get(item)
+    def __setitem__(self, key, value):
+        self.__dict__[key] = value
+    def add_production(self, production:dict):
+
+        for key, value in production.items():
+            if self[key]:
+                self[key] += int (value)
+            else:
+                self[key] = int(value)
+    def consume_production(self, production:dict):
+        for key, value in production.items():
+            if self[key] and self[key] >= int(value):
+                self[key] -= int(value)
+            else:
+                raise ValueError(f"Insufficient {key} production")
+
 
 class TerritoryHandler:
     def __init__(self, territories):
@@ -473,9 +509,12 @@ class TerritoryHandler:
             return hex_to_change
         return None
     def produce(self):
-        for hex in self.territories:
-            if isinstance(HexagonWheat, hex):
-                hex.produce
+        production = ProductionStorage(sheep=0, pigs=0, wheat=0, barley=0)
+        for hexagon in self.territories:
+            if isinstance(hexagon, HexagonWheat):
+                result_prod = hexagon.produce()
+                production.add_production(result_prod)
+        return production.__dict__
 
 
 class Village(Building):
@@ -485,15 +524,13 @@ class Village(Building):
         self.population = 100
         self.forest_area = 99
         self.pastures_area = 99
-        self.barley = 0
-        self.wheat = 0
-        self.pigs = 0
-        self.sheep = 0
+        self.storage = ProductionStorage(sheep=0, pigs=0, wheat=0, barley=0)
         self.generate_parameters()
         self.draw()
         self.controlled_territories = []
+        self.territory_handler = None
         if not loading:
-            self.territory_handler = TerritoryHandler(self.initialize())
+            self.initialize()
             self.create_initial_territories()
 
     def generate_parameters(self):
@@ -502,11 +539,13 @@ class Village(Building):
         self.pastures_area = random.randint(25, 149)
 
     def initialize(self):
-        return self.game_map.coordinate_range(self.game_map.hexes[self.grid_pos], 2)
+        hexes_in_range = self.game_map.coordinate_range(self.game_map.hexes[self.grid_pos], 2)
+        self.territory_handler = TerritoryHandler(hexes_in_range)
+    def save_to_json(self):
+        save_dict = super().save_to_json()
+        save_dict['data']['territories'] = [hex.grid_pos for hex in self.territory_handler.territories]
+        return save_dict
 
-        # for hex in hexes_in_range:
-        #     if isinstance(hex, (HexagonEmpty, HexagonLand)):
-        #         self.available_territories.append(hex)
 
     def draw(self):
         super().draw()
@@ -533,7 +572,8 @@ class Village(Building):
             self.territory_handler.append(hex_created)
 
     def produce(self):
-        self.food = self.population * 2
+        self.storage.add_production(self.territory_handler.produce())
+        print(self.storage)
 
     def consume(self):
         self.food -= self.population

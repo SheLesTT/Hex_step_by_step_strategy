@@ -119,8 +119,12 @@ class Map:
         self.hexes = hexes
         for building in self.buildings:
             build = building.building_on_hex
+            territories = [self.hexes[tuple(grid_pos)]  for grid_pos in hexes_json[str(building.grid_pos)]['building_on_hex']["data"]["territories"] ]
             if isinstance(build, Village):
                 build.initialize()
+                build.territory_handler.territories = territories
+
+
 
     def save_to_json(self, ):
 
@@ -207,8 +211,8 @@ class Map:
             param_value = self.calculate_total_parameter(parameter)
             self.global_parameters.change_parameter(parameter, param_value)
             self.statistics[parameter].append(param_value)
-    def write_statistics_to_file(self):
-        full_stats  = {"global_parameters":self.statistics}
+    def write_statistics_to_file(self, length: int):
+        full_stats  = {"length":length, "global_parameters":self.statistics}
         for idx,building in enumerate(self.buildings):
             full_stats[f"building_{idx}"] = building.building_on_hex.statistics
         with open("statistics.json", "w") as f:

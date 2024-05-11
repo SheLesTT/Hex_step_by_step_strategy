@@ -18,7 +18,8 @@ class StatsGraphBuilder():
             statistics = json.load(f)
             vis_parameters = statistics[building][parameter]
             figure, axis = plt.subplots()  # Create a figure (the container) and an axis (for plotting)
-            axis.plot([self.start_date + i for i in range(self.years+2)], vis_parameters)  # Plot sample data
+            print(statistics['length'], vis_parameters)
+            axis.plot([self.start_date + i for i in range(statistics['length'])], vis_parameters)  # Plot sample data
             plot_canvas = FigureCanvas(figure)  # Create a canvas to render the Matplotlib plot
             plot_canvas.draw()  # Update the Matplotlib plot if needed
             renderer = plot_canvas.get_renderer()
