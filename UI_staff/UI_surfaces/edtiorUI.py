@@ -1,5 +1,6 @@
 import pygame
 
+from colors import Color as C
 from UI_staff.UI_Elements import UiSurface, ButtonList, MenuButton, TextObservable
 from UI_staff.UI import UI
 
@@ -54,7 +55,7 @@ class EditorUI(UI):
 
     def add_editor_mods_list(self):
         button_list = ButtonList(position=(0, 0), name="editor_mods")
-        modes = ["Hexes", "Rivers", "Roads", "Buildings", "None"]
+        modes = ["Гексы", "Реки", "Дороги", "Здания", "Параметры"]
         [button_list.add_element(mode, mode) for mode in modes]
         button_list.elements_list[1].add_action(self.close_hexes_list, action_args=())
         button_list.elements_list[2].add_action(self.close_hexes_list, action_args=())
@@ -74,19 +75,19 @@ class EditorUI(UI):
 
         display_size = pygame.display.get_surface().get_size()
         button_size = (100, 100)
-        undo_button = MenuButton("Undo", 700, 700, button_size,name="undo")
-        delete_button = MenuButton("Delete", 600,600,button_size, name="delete")
-        finish_move = MenuButton("Create graph", display_size[0] - 100, display_size[1] - 100 - 100 * 3,
-                                 button_dimensions=button_size, action=self.game_map.create_graph, color=(255, 0, 0),
-                                 font_size=24, font_name="Arial")
+        undo_button = MenuButton("Отменить", 400,0, button_size,name="undo", color=C.yellow)
+        delete_button = MenuButton("Удалить",500,0,button_size, name="delete", color=C.yellow,)
+        # finish_move = MenuButton("Create graph", display_size[0] - 100, display_size[1] - 100 - 100 * 3,
+        #                          button_dimensions=button_size, action=self.game_map.create_graph, color=C.yellow,
+        #                          font_size=24, font_name="Arial")
 
-        load_to_json = MenuButton("Save Game", display_size[0] - 100, display_size[1] - 100 - 100 * 4,
-                                  button_dimensions=button_size, action=self.save_game, color=(255, 0, 0),
+        load_to_json = MenuButton("Cохранить", 600,0,
+                                  button_dimensions=button_size, action=self.save_game, color=C.yellow,
                                   font_size=24, font_name="Arial")
 
-        exit_button = MenuButton("Exit", 700,0,button_size, name="exit")
+        exit_button = MenuButton("Выйти", 700,0,button_size, name="exit", color=C.yellow)
         self.add_element(0, undo_button)
-        self.add_element(0, finish_move)
+        # self.add_element(0, finish_move)
         self.add_element(0, load_to_json)
         self.add_element(0, delete_button)
         self.add_element(0, exit_button)

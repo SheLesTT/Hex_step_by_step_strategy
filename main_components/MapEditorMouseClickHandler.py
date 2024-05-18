@@ -23,7 +23,6 @@ class MapEditorMouseClickHandler(MapMouseClickHandler):
         self.set_UI_buttons()
 
     def undo(self):
-        print("i am in undo")
         if len(self.actions_list):
             action = self.actions_list.pop()
             self.logger.debug(f"undoing action {action}")

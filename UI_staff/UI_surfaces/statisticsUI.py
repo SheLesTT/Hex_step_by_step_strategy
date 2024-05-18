@@ -1,8 +1,8 @@
 import json
 import os
-
+from colors import Color as C
 from UI_staff.UI import UI
-from UI_staff.UI_Elements import MenuButton, ButtonList
+from UI_staff.UI_Elements import MenuButton, ButtonList, Label
 from StatsGraphBuilder import StatsGraphBuilder
 
 
@@ -21,26 +21,31 @@ class StatisticsUI(UI):
         self.init_buttons()
         self.add_buildings_list(building)
         self.add_parameters_list(parameters)
+        self.add_labels()
 
     def init_buttons(self):
         button_dimensions = (200,50)
 
 
-        exit_button = MenuButton("Exit", 700, 700, button_dimensions=button_dimensions,
-                                 action=None, color=(0, 0, 255), font_size=24, font_name="Arial",name = "exit")
+        exit_button = MenuButton("Exit", 600, 0, button_dimensions=button_dimensions,
+                                 action=None, color=C.yellow, font_size=24, font_name="Arial",name = "exit")
 
 
         self.add_element(0,exit_button)
+    def add_labels(self):
+
+        self.add_element(0, Label(str("Выберите населенный пункт"), (0, 0), "choose_building", C.brown))
+        self.add_element(0, Label(str("Выберите параметр"), (0, 225), "choose_building", C.brown))
 
     def add_buildings_list(self, buildings_names):
-        map_saves = ButtonList(position=(0,0),name= "buildings")
+        map_saves = ButtonList(position=(1,25),name= "buildings")
         for save_name in buildings_names:
             map_saves.add_element(str(save_name), save_name)
         [element.add_action(self.create_chart, action_args=()) for element in map_saves.elements]
         self.add_element(0,map_saves)
 
     def add_parameters_list(self, parameters_names):
-        map_saves = ButtonList(position=(0,200),name= "parameters")
+        map_saves = ButtonList(position=(0,250),name= "parameters")
         for save_name in parameters_names:
             map_saves.add_element(str(save_name), save_name)
         [element.add_action(self.create_chart, action_args=()) for element in map_saves.elements]

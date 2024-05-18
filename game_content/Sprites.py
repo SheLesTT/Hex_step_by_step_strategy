@@ -307,15 +307,15 @@ class HexagonWheat(Hexagon):
             self.mods.put(self.current_mod)
         self.draw()
 
-    def produce(self, modifier=1) -> dict:
+    def produce(self, fertility_coef=1) -> dict:
         production = None
         if self.current_mod == 'rest':
             production = {}
         if self.current_mod == 'wheat':
-            production = 1000 * modifier * self.fertility
+            production = 1000 * fertility_coef * self.fertility
             production = {'wheat':production}
         if self.current_mod == 'barley':
-            production = 1000 * modifier * self.fertility
+            production = 1000 * fertility_coef * self.fertility
             production = {'barley':production}
         self.change_fertility()
         self.check_fertility()
@@ -406,9 +406,9 @@ class Building(MapObject):
     def draw_parameter_for_visualisation(self):
         if self.parameter_for_visualisation:
             parameter = self.get_parameter(self.parameter_for_visualisation)
-            my_font = pygame.font.SysFont(str(parameter), 16)
-            text_surface = my_font.render(str(parameter), False, (255, 255, 255))
-            self.image.blit(text_surface, (0, 19))
+            my_font = pygame.font.SysFont(str(parameter), 22)
+            text_surface = my_font.render(str(parameter), False, (0, 0, 0))
+            self.image.blit(text_surface, (4, 27))
 
     def collect_statistics(self):
         self.statistics["population"].append(self.population)
@@ -418,8 +418,9 @@ class Building(MapObject):
             else:
                 self.statistics[key] = [value]
 
-    def yearly_calculation(self, pandemic_severity):
-        self.produce()
+    def yearly_calculation(self, pandemic_severity: int, fertiliy_coef: float):
+        fertiliy_coef = fertiliy_coef + random.uniform(-0.1, 0.1)
+        self.produce(fertiliy_coef)
         try:
             self.storage.consume_production({'wheat': self.population *40, 'barley': self.population * 10})
         except ValueError as e:
@@ -428,7 +429,7 @@ class Building(MapObject):
             self.population - self.population * (0.5 * pandemic_severity * random.triangular(0.8, 0.9, 1.1)))
         self.population += 5
         self.collect_statistics()
-    def produce(self):
+    def produce(self, fertility_coef ):
         print("produce")
         pass
     def change_visualization_parameter(self, parameter: str):
@@ -452,7 +453,7 @@ class Town(Building):
         self.population = random.randint(1000, 10000)
         self.goods = random.randint(50, 100)
 
-    def produce(self):
+    def produce(self,fertility_coef):
         self.goods = self.population * 0.1
 
     def consume(self):
@@ -502,17 +503,16 @@ class TerritoryHandler:
         self.territories.append(hex)
 
     def get_free_hex(self) -> Hexagon | None:
-        print(self.available_territories)
         if self.available_territories:
             hex_to_change = random.choice(self.available_territories)
             self.available_territories.remove(hex_to_change)
             return hex_to_change
         return None
-    def produce(self):
+    def produce(self, fertlity_coef):
         production = ProductionStorage(sheep=0, pigs=0, wheat=0, barley=0)
         for hexagon in self.territories:
             if isinstance(hexagon, HexagonWheat):
-                result_prod = hexagon.produce()
+                result_prod = hexagon.produce(fertlity_coef)
                 production.add_production(result_prod)
         return production.__dict__
 
@@ -541,6 +541,8 @@ class Village(Building):
     def initialize(self):
         hexes_in_range = self.game_map.coordinate_range(self.game_map.hexes[self.grid_pos], 2)
         self.territory_handler = TerritoryHandler(hexes_in_range)
+    def set_nearest_town(self, nearest_town):
+        self.nearest_town = nearest_town
     def save_to_json(self):
         save_dict = super().save_to_json()
         save_dict['data']['territories'] = [hex.grid_pos for hex in self.territory_handler.territories]
@@ -554,7 +556,6 @@ class Village(Building):
         self.draw_parameter_for_visualisation()
 
     def create_initial_territories(self):
-        print("in create initial territories")
         crops_phields = max(12, min(3, math.ceil(self.population / 30)))
         for i in range(crops_phields):
             hex_to_change = self.territory_handler.get_free_hex()
@@ -571,12 +572,10 @@ class Village(Building):
             hex_created = self.game_map.change_hex("HexagonSheep", hex_to_change.grid_pos)
             self.territory_handler.append(hex_created)
 
-    def produce(self):
-        self.storage.add_production(self.territory_handler.produce())
-        print(self.storage)
+    def produce(self, fertility_coef):
+        self.storage.add_production(self.territory_handler.produce( fertility_coef))
 
-    def consume(self):
-        self.food -= self.population
+
 
 
 class Mine(Building):

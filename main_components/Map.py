@@ -1,15 +1,16 @@
 import json
 from collections import deque, defaultdict
+from heapq import *
 from typing import List
 
 import pygame
 
 from math import *
 
-from UI_staff.UI_Elements import Observable
+from UI_staff.Interfaces import Observable
 from game_content.Groups import HexesGroup
 from game_content.Sprites import Hexagon, HexagonMountain, HexagonSea, HexagonLand, Town, HexagonEmpty, \
-    OffsetCoordinates, Village
+    OffsetCoordinates, Village, Building
 from game_content.sprites_factory import HexesFactory
 
 class GlobalParameters(Observable):
@@ -20,13 +21,14 @@ class GlobalParameters(Observable):
         self.population = 0
         self.food = 0
         self.goods = 0
+        self.year = 1200
+        self.modeling_speed = 1
 
     def add_observer(self, observer):
         if not observer in self.observers:
             self.observers.append(observer)
     def notify_observers(self, parameter=None, value=None):
         for observer in self.observers:
-            print("notifying observers", parameter, value)
             observer.update(parameter,value)
     def change_parameter(self, parameter, value):
         self.__dict__[parameter] = value
@@ -75,22 +77,42 @@ class Map:
                             while not prev_hex.building_on_hex:
                                 count += 1
                                 prev_hex = self.hexes[previous[prev_hex.grid_pos[0]][prev_hex.grid_pos[1]]]
-                            graph[prev_hex.building_on_hex].append((cur_hex.building_on_hex, count))
-                            graph[cur_hex.building_on_hex].append((prev_hex.building_on_hex, count))
+                            graph[prev_hex.building_on_hex].append((count, cur_hex.building_on_hex))
+                            graph[cur_hex.building_on_hex].append((count,  prev_hex.building_on_hex ))
 
                     for neighbour in cur_hex.neighbours:
                         if neighbour.is_road_on_hex() and not visited[neighbour.grid_pos[0]][neighbour.grid_pos[1]]:
                             visited[neighbour.grid_pos[0]][neighbour.grid_pos[1]] = True
                             previous[neighbour.grid_pos[0]][neighbour.grid_pos[1]] = cur_hex.grid_pos
                             queue.append(neighbour)
-
         print(graph)
         return graph
+
+    def find_nearest_town(self,graph: dict, start: Building,) -> Town | None:
+
+        nearest_town = (float('inf'), None)
+        queue = []
+        heappush(queue, (0, start))
+        cost_visited = {start: 0}
+        visited = {start: None}
+
+        while queue:
+            current_cost, current = heappop(queue)
+            if isinstance(current, Town) and current_cost < nearest_town[0]:
+                nearest_town = (current_cost, current)
+            for next_cost, next in graph[current]:
+                new_cost = current_cost + next_cost
+                if (next not in cost_visited or new_cost < cost_visited[next]) and new_cost < nearest_town[0]:
+                    cost_visited[next] = new_cost
+                    heappush(queue, ( new_cost, next))
+                    visited[next] = current
+        if nearest_town[1] is None:
+            return None
+        return nearest_town
+
     def calculate(self):
-        self.graph = self.create_graph()
         i = 1
         while i < 100:
-            print(i)
             i+=1
             for city, neighbours in self.graph.items():
                 neighbours = [neighbour[0] for neighbour in neighbours]
@@ -102,7 +124,6 @@ class Map:
 
     def load_from_json(self, name: str) -> HexesGroup:
         hexes = HexesGroup()
-        print("this is file in load from json", name)
         with open("./model_saves/" + name, "r") as f:
             map_json= json.load(f)
             meta_json =map_json["meta_info"]
@@ -119,9 +140,9 @@ class Map:
         self.hexes = hexes
         for building in self.buildings:
             build = building.building_on_hex
-            territories = [self.hexes[tuple(grid_pos)]  for grid_pos in hexes_json[str(building.grid_pos)]['building_on_hex']["data"]["territories"] ]
             if isinstance(build, Village):
                 build.initialize()
+                territories = [self.hexes[tuple(grid_pos)]  for grid_pos in hexes_json[str(building.grid_pos)]['building_on_hex']["data"]["territories"] ]
                 build.territory_handler.territories = territories
 
 
@@ -131,7 +152,6 @@ class Map:
         map_dict = {}
         for hex in self.hexes:
             d = hex.save_to_json()
-            print('hex', hex, 'dictionary',d)
             map_dict[str(hex.grid_pos)] = d
         final_dict = {"meta_info":{"rows":self.rows, "columns" :self.columns}, "map": map_dict}
         with open("./model_saves/" + self.file_to_load_from, "w") as f:

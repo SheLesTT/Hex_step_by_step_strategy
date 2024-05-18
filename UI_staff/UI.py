@@ -1,7 +1,7 @@
 import os
-
+import pygame
 from Modeling.CityGraph import CityGraph
-from UI_staff.UI_Elements import *
+from UI_staff.Interfaces import Scrollable
 from logger import  logger
 pygame.font.init()
 font_size = 20
@@ -12,7 +12,7 @@ class UI:
         self.window_size = window_size
         self.elements = [[],[]]
         self.logger = logger.get_logger("UI")
-        self.UI_surface = None
+        self.UI_surface = 4
 
     def add_layer (self, element):
         self.elements.append([])
@@ -77,6 +77,7 @@ class UI:
                         element.draw(self.UI_surface)
                         self.logger.info(f"UI element {element}, was scrolled")
                         return result
+
 
 
 
