@@ -19,7 +19,7 @@ class CityGraph:
         for village in self.graph.keys():
             if isinstance(village, Village):
                 if nearest_town := self.game_map.find_nearest_town(self.graph, village):
-                    village.set_nearest_town(nearest_town)
+                    village.set_nearest_town(nearest_town[1])
 
 
     def calculate_climate(self):
@@ -70,11 +70,13 @@ class CityGraph:
             pandemic_severity = self.calculate_pandemic()
             this_year_temperature = self.calculate_climate()
             fertility_coef = np.random.normal(this_year_temperature, 0.15)
-            for hex in self.game_map.hexes:
-                if isinstance(hex, HexagonWheat):
-                    hex.produce()
+            # for hex in self.game_map.hexes:
+            #     if isinstance(hex, HexagonWheat):
+            #         hex.produce()
             for city, neighbours in self.graph.items():
                 city.yearly_calculation(pandemic_severity, fertility_coef)
+            for city, neighbours in self.graph.items():
+                city.migrate()
             self.game_map.draw_buildings()
             self.game_map.calculate_global_parameters()
         self.game_map.write_statistics_to_file(years)

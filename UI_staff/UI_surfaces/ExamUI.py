@@ -6,8 +6,41 @@ class ExamUI(UI):
     def __init__(self, window_size):
         super().__init__(window_size)
 
-        self.questions = ["Positioning of rotated surfaces is tricky. When drawing rotated text, the anchor point, the position you actually specify, remains fixed, and the text rotates around it. For instance, if you specify the top left of the text to be at (100, 100) with an angle of 90, then the Surface will actually be drawn so that its bottom left is at\n kdf \n cerjyl",
-                          "this is my new text"]
+        self.questions = [" 1) Какие социальные классы существовали в Средневековой Англии XIV века? \n"
+"A) Король, дворяне, крестьяне, рабы \n"
+"B) Король, дворяне, ремесленники, крестьяне\n"
+"C) Король, феодалы, вассалы, крестьяне\n"
+"D) Король, лорды, рыцари, крестьяне\n",
+"2) Какой материал чаще всего использовался для строительства крестьянских жилищ в XIV веке?\n"
+"A) Камень\n"
+"B) Кирпич\n"
+"C) Дерево и глина\n"
+"D) Мрамор",
+# "Какие сельскохозяйственные культуры были основными в Англии XIV века?\n"
+# "A) Пшеница, ячмень, овес\n"
+# "B) Рис, кукуруза, картофель\n"
+# "C) Виноград, оливки, цитрусовые\n"
+# "D) Рожь, хлопок, сахарный тростник\n",
+# "Что входило в ежедневный рацион питания крестьян?\n"
+# "A) Мясо, вино, экзотические фрукты\n"
+# "B) Хлеб, овощи, немного мяса\n"
+# "C) Рыба, рис, тропические фрукты\n"
+# "D) Паста, оливковое масло, сыр\n",
+# "Как была организована система феодализма в Англии XIV века?\n"
+# "A) Крестьяне владели землей и платили налоги королю\n"
+# "B) Лорды предоставляли землю вассалам в обмен на военную службу\n"
+# "C) Король владел всей землей и сдавал её в аренду крестьянам\n"
+# "D) Вассалы управляли землей без обязательств перед лордами\n",
+# "Какие ремесла были наиболее развиты в средневековых английских городах?\n"
+# "A) Ювелирное дело, кузнечное дело, ткачество\n"
+# "B) Строительство кораблей, гончарное дело, резьба по дереву\n"
+# "C) Производство шелка, виноделие, хлебопечение\n"
+# n"D) Литье стекла, производство бумаги, печатное дело\n"
+]
+
+
+
+
         self.init_elements()
         self.draw_elements()
 
@@ -17,9 +50,6 @@ class ExamUI(UI):
     def finish_test(self):
         self.find_element("questions").finish_test()
         self.draw_elements()
-
-
-
 
     def display_text(surface, text, pos, font, color):
         collection = [word.split(' ') for word in text.splitlines()]
@@ -39,7 +69,6 @@ class ExamUI(UI):
             y += word_height  # Start on new row.
 
 
-
     def init_buttons(self):
         button_dimensions = (200,50)
         exit_button = MenuButton("Exit",  600, 0, button_dimensions=button_dimensions,
@@ -51,7 +80,7 @@ class ExamUI(UI):
 
     def init_questions_surface(self):
         questions_surface = ExamSurface((600, 1200), (100, 100), name="questions")
-        questions_surface.build_surface(self.questions, answers=["A", "B"] )
+        questions_surface.build_surface(self.questions, answers=["A", "B", "C", "D","E"] )
         questions_surface["finish_test"].add_action(self.finish_test, ())
 
         self.add_element(0, questions_surface)

@@ -27,6 +27,7 @@ class UI_Element(ABC):
 
     def check_click(self, mouse_pos: tuple[int, int]):
         pass
+
     def move_element(self, offset):
         pass
 
@@ -149,7 +150,7 @@ class ButtonList(UI_Element, Scrollable):
                 self.scroll = test_scroll
                 self.upper_surf.fill(self.upper_surf_color)
                 self.upper_surf.blit(self.bottom_surf, (0, self.scroll))
-                [element.move_button(y * 10) for element in self.elements]
+                [element.move_element((0, y * 10)) for element in self.elements]
             return True
 
     def check_click(self, mouse_pos: tuple[int, int]):
@@ -234,6 +235,7 @@ class Label(UI_Element):
         self.font = pygame.font.SysFont("Arial", 24)
         self.text_color = text_color
         self.text_surf = self.font.render(self.text, False, self.text_color)
+
     def change_text(self, text):
         self.text = text
         self.text_surf = self.font.render(self.text, False, self.text_color)
@@ -243,11 +245,42 @@ class Label(UI_Element):
             display_surface.blit(self.text_surf, self.position)
 
 
-
-
-
 class TextBlock(UI_Element):
-    pass
+    def __init__(self, size: tuple[int, int], position: tuple[int, int], text="", name=""):
+        super().__init__(name=name)
+        self.surface = pygame.Surface(size)
+        self.surface.fill(C.yellow)
+        self.position = position
+        self.name = name
+        self.UI_surface = None
+        self.display_text(text, (10,0), pygame.font.SysFont("Arial", 24), C.brown)
+    def get_height(self):
+        return self.surface.get_height()
+
+    def draw(self, pygame_surface: pygame.Surface) -> None:
+        print("drawing text block", self.name)
+        pygame_surface.blit(self.surface, self.position)
+
+    def display_text(self, text, pos, font, color):
+        print("Displaying text", font)
+        collection = [word.split(' ') for word in text.splitlines()]
+        space = font.size(' ')[0]
+
+        x, y = pos
+        for line in collection:
+            for word in line:
+                word_surface = font.render(word, 0, color)
+                word_width, word_height = word_surface.get_size()
+                if x + word_width >= self.surface.get_width():
+                    x = pos[0]  # Reset the x.
+                    y += word_height  # Start on new row.
+                self.surface.blit(word_surface, (x, y))
+                x += word_width + space
+            x = pos[0]  # Reset the x.
+            y += word_height  # Start on new row.
+        self.UI_surface = pygame.Surface((self.surface.get_width(), y + 10), pygame.SRCALPHA)
+        self.UI_surface.blit(self.surface, (0, 0))
+
 
 class UISurface(UI):
 
@@ -260,18 +293,21 @@ class UISurface(UI):
         for layer in self.elements:
             for element in layer:
                 if element.visible:
+                    print("UI surafa", self.UI_surface)
                     element.draw(self.UI_surface)
 
         display_surface.blit(self.UI_surface, self.position)
 
-class ExamSurface(UISurface, TextObservable):
+
+class ExamSurface(UISurface, TextObservable, Scrollable):
     def __init__(self, size: tuple[int, int], position: tuple[int, int], visible=True, name=""):
         super().__init__(size, position, name=name)
-        self.bottom_surf = pygame.Surface((size[0],size[1]+400), pygame.SRCALPHA)
+        self.bottom_surf = pygame.Surface((size[0], size[1] + 400), pygame.SRCALPHA)
         self.visible = visible
         self.observers = []
         self.size = size
         self.UI_surface = pygame.Surface(size, masks=(0, 0, 0))
+        self.UI_surface.fill(C.brown)
 
         self.position = position
         self.absolute_rect = pygame.Rect(self.position[0], self.position[1], self.size[0], self.size[1])
@@ -280,65 +316,44 @@ class ExamSurface(UISurface, TextObservable):
         self.answers = []
         self.scroll = 0
 
-    def draw(self, display_surface: pygame.Surface):
-        # self.UI_surface = pygame.Surface(self.size, masks=(0, 0, 0))
-        # self.UI_surface.fill(C.yellow)
-        super().draw(display_surface)
-
+    # def draw(self, display_surface: pygame.Surface):
+    #     # self.UI_surface = pygame.Surface(self.size, masks=(0, 0, 0))
+    #     # self.UI_surface.fill(C.yellow)
+    #     super().draw(display_surface)
 
     def finish_test(self):
         for element, answer in zip(self.input_boxes, self.answers):
             if element.text == answer:
                 position_for_lable = (
-                element.position[0] + element.size[0] + 10, element.position[1] + element.size[1] // 2 - 10)
+                    element.position[0] + element.size[0] + 10, element.position[1] + element.size[1] // 2 - 10)
                 self.add_label("correct", position_for_lable, "correct", color=C.brown)
                 print("correct")
             else:
                 position_for_lable = (
-                element.position[0] + element.size[0] + 10, element.position[1] + element.size[1] // 2 - 10)
+                    element.position[0] + element.size[0] + 10, element.position[1] + element.size[1] // 2 - 10)
                 self.add_label("wrong", position_for_lable, "wrong", color=C.brown)
                 print("wrong")
 
     def add_label(self, text, position, name, color=(0, 0, 0)):
-        self.add_element(0,Label(str(text), position, name, text_color=color))
+        self.add_element(0, Label(str(text), position, name, text_color=color))
 
     def build_surface(self, questions: list, answers: list):
         self.answers = answers
         font = pygame.font.SysFont("Arial", 24)
         y = 0
         for question_number, text in enumerate(questions):
-            y = self.display_text(self.UI_surface, text, (0, y), font, (0, 255, 0))
+            text_surf = TextBlock((580, 200), (10, y), name="question" + str(question_number))
+            y += text_surf.get_height()
             y += 10
             text_input = TextInput("", position=(10, y), offset=self.position, name="question" + str(question_number))
-            self.add_element(0,text_input)
+            self.add_element(0, text_input)
+            self.add_element(0, text_surf)
             self.input_boxes.append(text_input)
-            y += 60
+            y += 10
 
         finish_test = MenuButton("Finish test", 500, 500, button_dimensions=(200, 50),
-                                 action=None, color=C.yellow, font_size=24, font_name="Arial",name = "finish_test")
-        self.add_element(0,finish_test)
-
-
-
-    def display_text(self, surface, text, pos, font, color):
-        collection = [word.split(' ') for word in text.splitlines()]
-        space = font.size(' ')[0]
-
-        x, y = pos
-        for line in collection:
-            for word in line:
-                word_surface = font.render(word, 0, color)
-                word_width, word_height = word_surface.get_size()
-                if x + word_width >= surface.get_width():
-                    x = pos[0]  # Reset the x.
-                    y += word_height  # Start on new row.
-                surface.blit(word_surface, (x, y))
-                x += word_width + space
-            x = pos[0]  # Reset the x.
-            y += word_height  # Start on new row.
-        return y
-
-
+                                 action=None, color=C.yellow, font_size=24, font_name="Arial", name="finish_test")
+        self.add_element(0, finish_test)
 
     def notify_observers(self, message=None):
         for observer in self.observers:
@@ -356,23 +371,31 @@ class ExamSurface(UISurface, TextObservable):
                 if isinstance(element, TextObservable):
                     print(element.name, "observer added")
                     element.add_observer(observer)
+    def draw(self, display_surface: pygame.Surface):
+        for layer in self.elements:
+            for element in layer:
+                if element.visible:
+                    element.draw(self.bottom_surf)
 
-    # def check_scroll(self, y):
-    #     mouse_pos = pygame.mouse.get_pos()
-    #     print("checking scroll")
-    #     if self.absolute_rect.collidepoint(mouse_pos):
-    #         print("collide")
-    #         test_scroll = self.scroll + y * 10
-    #         if test_scroll < 0 and test_scroll > - (self.bottom_surf.get_height() - self.UI_surface.get_height()):
-    #             self.scroll = test_scroll
-    #             self.UI_surface.fill(C.brown)
-    #             self.UI_surface.blit(self.bottom_surf, (0, self.scroll))
-    #             for layer in self.elements:
-    #                 for element in layer:
-    #                     element.move_element((0, y * 10))
-    #         return True
+        self.UI_surface.blit(self.bottom_surf, (0, self.scroll))
+        display_surface.blit(self.UI_surface, self.position)
 
 
+    def check_scroll(self, y):
+        mouse_pos = pygame.mouse.get_pos()
+        print("checking scroll")
+        if self.absolute_rect.collidepoint(mouse_pos):
+            print("collide")
+            test_scroll = self.scroll + y * 10
+            if test_scroll < 0 and test_scroll > - (self.bottom_surf.get_height() - self.UI_surface.get_height()):
+                print("test_scroll", test_scroll)
+                self.scroll = test_scroll
+                self.UI_surface.fill(C.brown)
+                self.UI_surface.blit(self.bottom_surf, (0, self.scroll))
+                for layer in self.elements:
+                    for element in layer:
+                        element.move_element((0, y * 10))
+            return True
 
 
 
@@ -406,77 +429,74 @@ class ParametersSurface(UISurface):
         self.add_element(0, Label(str(text), position, name, color))
 
 
-
-class UiSurface(UI_Element, TextObservable):
+class UiSurface(UISurface, TextObservable):
     def __init__(self, size: tuple[int, int], position: tuple[int, int], visible=False, name=""):
 
-        super().__init__(name=name)
+        super().__init__(window_size=size, position=position, name=name)
         self.visible = visible
         self.observers = []
-        self.surface = pygame.Surface(size, masks=(0, 0, 0), )
+        self.UI_surface = pygame.Surface(size, masks=(0, 0, 0), )
+        self.UI_surface.fill(C.yellow)
         self.position = position
-        self.rect = self.surface.get_rect(topleft=self.position)
-        self.elements = []
-        # self.text_input = TextInput("tata", position=(10,10), offset=(500,0))
-        # self.elements.append(self.text_input/)
+        self.rect = self.UI_surface.get_rect(topleft=self.position)
         self.city = None
-        self.generate_text_phields()
+        self.y = 50
+        self.generate_text_fields()
+        self.add_element(0,Label("Параметры", (100, 10), "test", text_color=C.brown))
+    def generate_text_fields(self):
 
-    def generate_text_phields(self):
-
-        population = TextInput("", position=(10, 10), offset=self.position, name="population")
-        cattle = TextInput("", position=(10, 60), offset=self.position, name="cattle")
-
-        self.elements.append(population)
-        self.elements.append(cattle)
+        self.add_element(0, Label("Население", (20, self.y), "test", text_color=C.brown))
+        self.add_element(0, TextInput("", position=(10,self.y+25), offset=self.position, name="population"))
+        self.y += 65
+        self.add_element(0, Label("Пшеница", (20, self.y), "test", text_color=C.brown))
+        self.add_element(0, TextInput("", position=(10, self.y + 25), offset=self.position, name="wheat"))
+        self.y += 65
+        self.add_element(0, Label("Ячмень", (20, self.y), "test", text_color=C.brown))
+        self.add_element(0, TextInput("", position=(10, self.y + 25), offset=self.position, name="barley"))
+        self.y += 65
+        self.add_element(0, Label("Овцы", (20, self.y), "test", text_color=C.brown))
+        self.add_element(0, TextInput("", position=(10, self.y + 25), offset=self.position, name="sheep"))
+        self.y += 65
+        self.add_element(0, Label("Свиньи", (20, self.y), "test", text_color=C.brown))
+        self.add_element(0, TextInput("", position=(10, self.y + 25), offset=self.position, name="pigs"))
+        self.y += 65
+        self.add_element(0, Label("Товары", (20, self.y), "test", text_color=C.brown))
+        self.add_element(0, TextInput("", position=(10, self.y + 25), offset=self.position, name="goods"))
         for observer in self.observers:
             self.add_observer(observer)
 
-    def find_element(self, name):
-        for element in self.elements:
-            if element.name == name:
-                return element
 
     def set_city(self, city):
-        if self.city:
-            try:
-                self.city.population = int(self.find_element("population").text)
-                self.city.cattle = self.find_element("cattle").text
-            except Exception as e:
-                print(e)
 
         self.city = city
         self.find_element("population").text = str(city.population)
-        self.find_element("food").text = str(city.food)
+        self.find_element("wheat").text = str(city.storage["wheat"])
+        self.find_element("barley").text = str(city.storage.barley)
+        self.find_element("sheep").text = str(city.storage.sheep)
+        self.find_element("pigs").text = str(city.storage.pigs)
+        self.find_element("goods").text = str(city.storage.goods)
 
     def hide(self):
         self.notify_observers(-1)
         self.visible = False
-        for element in self.elements:
-            element.visible = False
+        for layer in self.elements:
+            for element in layer:
+                element.visible = False
 
     def make_visible(self):
         self.visible = True
-        for element in self.elements:
-            element.visible = True
+        for layer in self.elements:
+            for element in layer:
+                element.visible = True
 
         # self
 
     def draw(self, display_surface: pygame.Surface):
-        if self.visible:
-            for element in self.elements:
-                element.draw(self.surface)
+        super().draw(display_surface)
+        self.UI_surface.fill(C.yellow)
 
-            display_surface.blit(self.surface, self.position)
 
-    def check_click(self, mouse_pos: tuple[int, int]):
-        if self.rect.collidepoint(mouse_pos):
-            self.notify_observers(-1)
 
-            for element in self.elements:
-                if element.check_click(mouse_pos):
-                    return element
-            return self
 
     def notify_observers(self, message=None):
         for observer in self.observers:

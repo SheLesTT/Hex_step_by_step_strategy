@@ -119,6 +119,7 @@ class MapEditorMouseClickHandler(MapMouseClickHandler):
             self.actions_list.append(ActionRecord(sprite_clicked.grid_pos, "building", building_name, True))
 
     def handle_click_in_none_mod(self, sprite_clicked):
+        print("handling click in none mod")
         if sprite_clicked.building_on_hex:
             self.logger.debug("Clicked o a hex with a building in none mode")
             self.user_interface.find_element("city_surface").set_city(sprite_clicked.building_on_hex)
@@ -130,10 +131,15 @@ class MapEditorMouseClickHandler(MapMouseClickHandler):
         mouse -= self.tracker.get_dragging_offset()
 
         if event.button == 1:
+            print("go click event")
             if sprite_clicked := self.check_if_hex_is_clicked(event):
+                print("sprite clicked", sprite_clicked)
+
+                print("Editor mod selected", self.user_interface.find_element("editor_mods").selected_element)
                 match self.user_interface.find_element("editor_mods").selected_element:
                     case "Hexes":
                         if not self.delete_mode:
+                            print("Adding hex, self delete mode", self.delete_mode)
                             self.add_hex(sprite_clicked)
                     case "Rivers":
                         if not self.delete_mode:
