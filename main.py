@@ -24,6 +24,7 @@ clock = pygame.time.Clock()
 
 window_size = (800, 800)
 screen = pygame.display.set_mode(window_size)
+screen.fill((0,234,0))
 internal_surface_size = (2500, 2500)
 running = True
 

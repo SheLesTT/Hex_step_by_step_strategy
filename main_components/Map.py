@@ -97,7 +97,9 @@ class Map:
         visited = {start: None}
 
         while queue:
+            print(queue)
             current_cost, current = heappop(queue)
+            print("this is cost", current_cost, current)
             if isinstance(current, Town) and current_cost < nearest_town[0]:
                 nearest_town = (current_cost, current)
             for next_cost, next in graph[current]:
@@ -198,7 +200,7 @@ class Map:
         hexes = HexesGroup()
         for i in range(self.rows):
             for j in range(self.columns):
-                hexes.add(self.hexes_factory.create_hex({'type':"HexagonEmpty"}, OffsetCoordinates(i, j),))
+                hexes.add(self.hexes_factory.create_hex({'type':"HexagonLand"}, OffsetCoordinates(i, j),))
         self.hexes = hexes
     def check_coord_validity(self, cords: OffsetCoordinates):
         return 0 <= cords.row < self.rows and 0 <= cords.column < self.columns

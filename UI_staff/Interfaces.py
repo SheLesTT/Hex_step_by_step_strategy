@@ -19,6 +19,19 @@ class Observable:
     def notify_observers(self):
         pass
 
+class UpdateObservable:
+    def __init__(self):
+        self.update_observers = []
+
+    def add_update_observer(self, observer):
+        self.update_observers.append(observer)
+
+    def remove_update_observer(self):
+        pass
+
+    def notify_update_observers(self):
+        pass
+
 
 class TextObservable(Observable):
 

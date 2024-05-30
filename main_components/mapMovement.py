@@ -49,8 +49,8 @@ class MapMovementTracker(pygame.sprite.Group):
         self.zoom_scale += event.y * 0.03
         if self.zoom_scale > 1.25 and event.y > 0:
             self.zoom_scale = 1.25
-        if self.zoom_scale < 0.75 and event.y < 0:
-            self.zoom_scale = 0.75
+        if self.zoom_scale < 0.3 and event.y < 0:
+            self.zoom_scale = 0.3
 
     def is_offset_in_borders(self, offset_borders):
         if self.offset.x < offset_borders['left']:

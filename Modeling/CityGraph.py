@@ -23,7 +23,7 @@ class CityGraph:
 
 
     def calculate_climate(self):
-        if  self.year > 1250 and self.year < 1300:
+        if  self.year > 1300 and self.year < 1300:
             self.medium_temperature -= 0.05
         if self.year >= 1300 and self.year < 1350:
             temperature_delta = random.choice([0.01, 0, -0.01])

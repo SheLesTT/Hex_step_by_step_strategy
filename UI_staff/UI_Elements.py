@@ -1,14 +1,13 @@
 from abc import ABC, abstractmethod
 import pygame, sys
 
-from UI_staff.Interfaces import TextObservable, Scrollable
+from UI_staff.Interfaces import TextObservable, Scrollable, UpdateObservable
 from UI_staff.UI import UI
 from colors import Color as C
 
 
 def empty_funciton():
     pass
-
 
 class UI_Element(ABC):
     def __init__(self, name):
@@ -83,6 +82,7 @@ class MenuButton(Button):
         self.absolute_rect = pygame.Rect(self.abs_x, self.abs_y, self.button_dimensions[0], self.button_dimensions[1])
 
     def check_click(self, pos: tuple[int, int]):
+        print(self.absolute_rect, "in point", pos)
         if self.absolute_rect.collidepoint(pos):
             print("Button was clicked ", self.action, pos, self.absolute_rect)
             self.action(*self.action_args)
@@ -248,21 +248,18 @@ class Label(UI_Element):
 class TextBlock(UI_Element):
     def __init__(self, size: tuple[int, int], position: tuple[int, int], text="", name=""):
         super().__init__(name=name)
-        self.surface = pygame.Surface(size)
-        self.surface.fill(C.yellow)
+        self.surface = pygame.Surface(size, pygame.SRCALPHA)
         self.position = position
         self.name = name
         self.UI_surface = None
-        self.display_text(text, (10,0), pygame.font.SysFont("Arial", 24), C.brown)
+        self.display_text(text, (10,0), pygame.font.SysFont("Arial", 24), C.yellow)
     def get_height(self):
         return self.surface.get_height()
 
     def draw(self, pygame_surface: pygame.Surface) -> None:
-        print("drawing text block", self.name)
-        pygame_surface.blit(self.surface, self.position)
+        pygame_surface.blit(self.UI_surface, self.position)
 
     def display_text(self, text, pos, font, color):
-        print("Displaying text", font)
         collection = [word.split(' ') for word in text.splitlines()]
         space = font.size(' ')[0]
 
@@ -293,16 +290,15 @@ class UISurface(UI):
         for layer in self.elements:
             for element in layer:
                 if element.visible:
-                    print("UI surafa", self.UI_surface)
                     element.draw(self.UI_surface)
 
         display_surface.blit(self.UI_surface, self.position)
 
 
-class ExamSurface(UISurface, TextObservable, Scrollable):
+class ExamSurface(UISurface, TextObservable, Scrollable, UpdateObservable):
     def __init__(self, size: tuple[int, int], position: tuple[int, int], visible=True, name=""):
         super().__init__(size, position, name=name)
-        self.bottom_surf = pygame.Surface((size[0], size[1] + 400), pygame.SRCALPHA)
+        self.bottom_surf = pygame.Surface((size[0], size[1] + 900), pygame.SRCALPHA)
         self.visible = visible
         self.observers = []
         self.size = size
@@ -315,44 +311,45 @@ class ExamSurface(UISurface, TextObservable, Scrollable):
         self.input_boxes = []
         self.answers = []
         self.scroll = 0
+        self.update_observers = []
 
-    # def draw(self, display_surface: pygame.Surface):
-    #     # self.UI_surface = pygame.Surface(self.size, masks=(0, 0, 0))
-    #     # self.UI_surface.fill(C.yellow)
-    #     super().draw(display_surface)
-
+    def notify_update_observers(self):
+        [observer.draw_elements() for observer in self.update_observers]
     def finish_test(self):
+        corretct_counter = 0
         for element, answer in zip(self.input_boxes, self.answers):
             if element.text == answer:
                 position_for_lable = (
                     element.position[0] + element.size[0] + 10, element.position[1] + element.size[1] // 2 - 10)
-                self.add_label("correct", position_for_lable, "correct", color=C.brown)
+                self.add_label("верно", position_for_lable, "correct", color=C.yellow)
+                corretct_counter += 1
                 print("correct")
             else:
                 position_for_lable = (
                     element.position[0] + element.size[0] + 10, element.position[1] + element.size[1] // 2 - 10)
-                self.add_label("wrong", position_for_lable, "wrong", color=C.brown)
+                self.add_label("неверно", position_for_lable, "wrong", color=C.yellow)
                 print("wrong")
+        self.add_label(f"Правильных ответов {corretct_counter} из {len(self.answers)} ", position=(100, 1520), name = "answers", color=C.yellow)
+        self.notify_update_observers()
 
     def add_label(self, text, position, name, color=(0, 0, 0)):
         self.add_element(0, Label(str(text), position, name, text_color=color))
 
     def build_surface(self, questions: list, answers: list):
         self.answers = answers
-        font = pygame.font.SysFont("Arial", 24)
-        y = 0
+        y = 20
         for question_number, text in enumerate(questions):
-            text_surf = TextBlock((580, 200), (10, y), name="question" + str(question_number))
+            text_surf = TextBlock((580, 170), (10, y), text=text, name="question" + str(question_number))
             y += text_surf.get_height()
-            y += 10
+            y += 15
             text_input = TextInput("", position=(10, y), offset=self.position, name="question" + str(question_number))
             self.add_element(0, text_input)
             self.add_element(0, text_surf)
             self.input_boxes.append(text_input)
-            y += 10
+            y += 65
 
-        finish_test = MenuButton("Finish test", 500, 500, button_dimensions=(200, 50),
-                                 action=None, color=C.yellow, font_size=24, font_name="Arial", name="finish_test")
+        finish_test = MenuButton("Завершить", 400, 1500,x_offset=self.position[0], y_offset=self.position[1], button_dimensions=(200, 50),
+                                 action=self.finish_test, color=C.yellow, font_size=24, font_name="Arial", name="finish_test")
         self.add_element(0, finish_test)
 
     def notify_observers(self, message=None):
@@ -372,6 +369,7 @@ class ExamSurface(UISurface, TextObservable, Scrollable):
                     print(element.name, "observer added")
                     element.add_observer(observer)
     def draw(self, display_surface: pygame.Surface):
+        print("calling draw in ui surface")
         for layer in self.elements:
             for element in layer:
                 if element.visible:
@@ -383,18 +381,15 @@ class ExamSurface(UISurface, TextObservable, Scrollable):
 
     def check_scroll(self, y):
         mouse_pos = pygame.mouse.get_pos()
-        print("checking scroll")
         if self.absolute_rect.collidepoint(mouse_pos):
-            print("collide")
-            test_scroll = self.scroll + y * 10
+            test_scroll = self.scroll + y * 25
             if test_scroll < 0 and test_scroll > - (self.bottom_surf.get_height() - self.UI_surface.get_height()):
-                print("test_scroll", test_scroll)
                 self.scroll = test_scroll
                 self.UI_surface.fill(C.brown)
                 self.UI_surface.blit(self.bottom_surf, (0, self.scroll))
                 for layer in self.elements:
                     for element in layer:
-                        element.move_element((0, y * 10))
+                        element.move_element((0, y *25 ))
             return True
 
 

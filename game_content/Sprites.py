@@ -5,7 +5,7 @@ from abc import ABC
 from dataclasses import dataclass
 from math import cos, sin, pi, sqrt
 from typing import NamedTuple, Protocol, runtime_checkable
-
+from colors import Color as C
 import pygame
 
 from main_components.Errors import InvalidTriangleError
@@ -22,22 +22,25 @@ class OffsetCoordinates(NamedTuple):
     def __str__(self):
         return str((self.row, self.column))
 
+@runtime_checkable
+class ProducingHexagon(Protocol):
+    def produce(self)->dict:
+        pass
 
 class MapObject(pygame.sprite.Sprite):
     def __init__(self, grid_pos, game_map):
         super().__init__()
         self.grid_pos = grid_pos
         self.game_map = game_map
-        self.width = 25
-        self.height = 25
-        self.name = "map object"
-        self.surf = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
-        self.image = self.surf
+        self.width = hex_width
+        self.height = hex_height
+        self.type = "MapObject"
+        self.image = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
         self.map_coords = self.calculate_coordinate_by_hex_position()
         self.rect = self.image.get_rect(center=self.map_coords)
 
     def __str__(self):
-        return f"{self.name} {self.grid_pos[0]}, {self.grid_pos[1]}"
+        return f"{self.type} {self.grid_pos[0]}, {self.grid_pos[1]}"
 
     def offset_to_cube_coords(self, grid_pos: OffsetCoordinates):
         q = grid_pos[0]
@@ -61,23 +64,17 @@ class MapObject(pygame.sprite.Sprite):
 
         return map_coord_x, map_coord_y
 
-@runtime_checkable
-class ProducingHexagon(Protocol):
-    def produce(self)->dict:
-        pass
 
 class Hexagon(MapObject):
-    def __init__(self, grid_pos, points_storage, game_map, color=(30, 70, 50), width=hex_width, height=hex_height):
+    def __init__(self, grid_pos, points_storage, game_map, color=(30, 70, 50), ):
 
         super().__init__(grid_pos, game_map)
         self.grid_pos = grid_pos
         self.points_storage = points_storage
         self.game_map = game_map
         self.color = color
-        self.width = width
-        self.height = height
         self.type = "hexagon"
-        self.image = pygame.Surface((width, height), pygame.SRCALPHA)  # Create a blank surface with transparency
+        self.image = pygame.Surface((self.width, self.height), pygame.SRCALPHA)  # Create a blank surface with transparency
         self.rect = self.image.get_rect(center=(self.map_coords[0], self.map_coords[1]))
         pygame.draw.polygon(self.image, self.color, self.points_storage.points)
         self.image.set_at(list(map(int, self.points_storage.points[0])), (225, 0, 0))
@@ -111,23 +108,6 @@ class Hexagon(MapObject):
         res = hex_dict
         return res
 
-    def __repr__(self):
-        return f"{self.type}, {self.grid_pos[0]}, {self.grid_pos[1]}"
-
-    def add_unit(self, unit):
-        self.unit_on_hex = unit
-
-    def remove_unit(self):
-        self.unit_on_hex = False
-
-    def kill_unit(self):
-        if self.unit_on_hex:
-            self.unit_on_hex.hide_hexes()
-            self.unit_on_hex.kill()
-        self.remove_unit()
-
-    def __str__(self):
-        return f"{self.type}, {self.grid_pos[0]}, {self.grid_pos[1]}"
 
     def update(self):
         pass
@@ -147,12 +127,12 @@ class Hexagon(MapObject):
             self.image.blit(self.building_on_hex.image, (11, 4))
 
     def draw_a_river(self, triangle):
-        pygame.draw.polygon(self.image, (0, 255, 255), self.points_storage.get_points_for_river(triangle))
+        pygame.draw.polygon(self.image, C.aqua, self.points_storage.get_points_for_river(triangle))
 
     def draw_a_road(self, triangle_number):
 
         if triangle_number != 6:
-            pygame.draw.polygon(self.image, (0, 30, 170), self.points_storage.get_points_for_road(triangle_number))
+            pygame.draw.polygon(self.image, C.brown, self.points_storage.get_points_for_road(triangle_number))
         elif triangle_number == 6 and not any(self.roads[:6]):
 
             pygame.draw.circle(self.image, (0, 30, 170), self.points_storage.get_points_for_road(triangle_number), 5)
@@ -216,7 +196,6 @@ class Hexagon(MapObject):
             if self.roads[direction]:
                 self.del_road(direction)
                 opposite_triangle = (direction + 3) % 6
-                print("ROads in a neigbour ", self.neighbours[direction])
                 self.neighbours[direction].del_road(opposite_triangle)
                 self.neighbours[direction].draw()
         self.del_road(6)
@@ -224,8 +203,8 @@ class Hexagon(MapObject):
 
 
 class HexagonLand(Hexagon):
-    def __init__(self, grid_pos, points_storage, game_map, color=(30, 70, 50), width=hex_width, height=hex_height):
-        super().__init__(grid_pos, points_storage, game_map, color, width=hex_width, height=hex_height)
+    def __init__(self, grid_pos, points_storage, game_map, color=C.green, ):
+        super().__init__(grid_pos, points_storage, game_map, color, )
         self.color = color
         self.type = "HexagonLand"
         self.draw()
@@ -233,7 +212,7 @@ class HexagonLand(Hexagon):
 
 class HexagonMountain(Hexagon):
     def __init__(self, grid_pos, points_storage, game_map, color=(255, 255, 255), width=hex_width, height=hex_height):
-        super().__init__(grid_pos, points_storage, game_map, color, width=hex_width, height=hex_height)
+        super().__init__(grid_pos, points_storage, game_map, color,)
         self.color = color
         self.type = "HexagonMountain"
         self.draw()
@@ -241,21 +220,21 @@ class HexagonMountain(Hexagon):
 
 class HexagonSea(Hexagon):
     def __init__(self, grid_pos, points_storage, game_map, color=(83, 236, 236), width=hex_width, height=hex_height):
-        super().__init__(grid_pos, points_storage, game_map, color, width=hex_width, height=hex_height)
+        super().__init__(grid_pos, points_storage, game_map, color,)
         self.color = color
         self.type = "HexagonSea"
         self.draw()
 
 
 class HexagonEmpty(Hexagon):
-    def __init__(self, grid_pos, points_storage, game_map, color=(0, 0, 0), width=hex_width, height=hex_height):
-        super().__init__(grid_pos, points_storage, game_map, color, width=hex_width, height=hex_height)
+    def __init__(self, grid_pos, points_storage, game_map, color=(0, 0, 0)):
+        super().__init__(grid_pos, points_storage, game_map, color,)
         self.color = color
         self.type = "HexagonEmpty"
         self.draw()
 class HexagonSheep(HexagonLand, ProducingHexagon):
-    def __init__(self, grid_pos, points_storage, game_map, color=(30, 70, 50), width=hex_width, height=hex_height):
-        super().__init__(grid_pos, points_storage, game_map, color, width=hex_width, height=hex_height)
+    def __init__(self, grid_pos, points_storage, game_map, color=(30, 70, 50),):
+        super().__init__(grid_pos, points_storage, game_map, color,)
         self.color = color
         self.type = "HexagonSheep"
         self.sheep = random.randint(5, 50)
@@ -266,7 +245,7 @@ class HexagonSheep(HexagonLand, ProducingHexagon):
         forest_image = pygame.image.load("Resources/sheep.png")
         self.image.blit(forest_image, (9, 5))
 
-    def produce(self, fertility_coef=1):
+    def produce(self, fertility_coef=1, population_for_hex=30):
         death_prob = random.uniform(0, 1)
         if death_prob > 0.09:
             death = random.uniform(0.1, 1)
@@ -278,8 +257,8 @@ class HexagonSheep(HexagonLand, ProducingHexagon):
 
 
 class HexagonForest(HexagonLand, ProducingHexagon):
-    def __init__(self, grid_pos, points_storage, game_map, color=(30, 70, 50), width=hex_width, height=hex_height):
-        super().__init__(grid_pos, points_storage, game_map, color, width=hex_width, height=hex_height)
+    def __init__(self, grid_pos, points_storage, game_map, color=(30, 70, 50),):
+        super().__init__(grid_pos, points_storage, game_map, color,)
         self.color = color
         self.type = "HexagonForest"
         self.pigs = random.randint(5, 50)
@@ -290,14 +269,17 @@ class HexagonForest(HexagonLand, ProducingHexagon):
         forest_image = pygame.image.load("Resources/forest.png")
         self.image.blit(forest_image, (9, 5))
 
-    def produce(self, fertility_coef=1):
+    def produce(self, fertility_coef=1, population_for_hex=30):
         death_prob = random.uniform(0, 1)
         if death_prob > 0.09:
             death = random.uniform(0.1, 1)
             self.pigs = int(self.pigs * death)
-        production =  self.pigs * 0.5
+        production = int( self.pigs * 0.5)
         self.pigs = int(self.pigs - production)
+        production *= 750
         self.pigs *= 2.5
+        if self.pigs >50:
+            self.pigs = 50
         return {"pigs": production}
 
 
@@ -305,7 +287,7 @@ class HexagonWheat(Hexagon, ProducingHexagon):
     def __init__(self, grid_pos, points_storage, game_map, fertility, mod, color=(30, 70, 50), ):
         self.fertility_colors = {"maximum": (76, 183, 27), "medium": (130, 203, 69), "low": (199, 134, 70),
                                  "minimum": (135, 147, 1)}
-        super().__init__(grid_pos, points_storage, game_map, color, width=hex_width, height=hex_height)
+        super().__init__(grid_pos, points_storage, game_map, color,)
         self.color = color
         self.type = "HexagonWheat"
         if fertility:
@@ -313,8 +295,8 @@ class HexagonWheat(Hexagon, ProducingHexagon):
 
         else:
             self.fertility = self.create_fertility()
-        self.mods_list = {'wheat': "Resources/wheat.png", 'barley': "Resources/grape.png",
-                          'rest': "Resources/sheep.png"}
+        self.mods_list = {'wheat': "Resources/wheat.png", 'barley': "Resources/barley.png",
+                          'rest': "Resources/zzz.png"}
         self.mods = queue.Queue()
         [self.mods.put(mod) for mod in self.mods_list.keys()]
         if mod:
@@ -344,17 +326,27 @@ class HexagonWheat(Hexagon, ProducingHexagon):
             self.mods.put(self.current_mod)
         self.draw()
 
-    def produce(self, fertility_coef=1) -> dict:
+    def produce(self, fertility_coef=1, peoples=30) -> dict:
         production = None
+        usage_coef = peoples / 30
+        if usage_coef < 0.9:
+            usage_coef = 0.9
         if self.current_mod == 'rest':
             production = {}
         if self.current_mod == 'wheat':
-            production = 1000 * fertility_coef * self.fertility
+            production =  240 * 1.8 * fertility_coef * self.fertility
+            if usage_coef > 1:
+                production *= 1.1
             production = {'wheat':production}
         if self.current_mod == 'barley':
-            production = 1000 * fertility_coef * self.fertility
+            production = 260 * 1.8 * fertility_coef * self.fertility
+            if usage_coef > 1:
+                production *= 1.1
             production = {'barley':production}
-        self.change_fertility()
+        usage_coef = peoples / 30
+        if usage_coef < 0.9:
+            usage_coef = 0.9
+        self.change_fertility(modifier=usage_coef)
         self.check_fertility()
         self.change_mod()
         return production
@@ -362,9 +354,12 @@ class HexagonWheat(Hexagon, ProducingHexagon):
     def change_fertility(self, modifier=1):
         if self.current_mod != 'rest':
             if self.fertility > 0:
-                self.fertility -= 0.1
+                self.fertility -= 0.1 * modifier
+
         else:
             self.fertility += 0.2
+            if self.fertility < 0.5:
+                self.fertility += 0.02
 
     def stop_producing(self):
         self.producing = False
@@ -396,8 +391,8 @@ class HexagonWheat(Hexagon, ProducingHexagon):
 
 
 class HexagonGrape(HexagonLand):
-    def __init__(self, grid_pos, points_storage, game_map, color=(30, 70, 50), width=hex_width, height=hex_height):
-        super().__init__(grid_pos, points_storage, game_map, color, width=hex_width, height=hex_height)
+    def __init__(self, grid_pos, points_storage, game_map, color=(30, 70, 50),):
+        super().__init__(grid_pos, points_storage, game_map, color,)
         self.color = color
         self.type = "HexagonGrape"
         self.draw()
@@ -418,8 +413,13 @@ class Building(MapObject):
         self.parameter_for_visualisation = None
         self.storage = ProductionStorage(sheep=0, pigs=0, wheat=0, barley=0, goods=0)
         self.draw()
-        self.statistics = {"population": [], "food": [], "goods": []}
+        self.statistics = {"population": [], "wheat_price": [], "sheep": [], "wheat": [], "barley": [], "goods": []}
+        self.population_coef = 1
+        self.wheat_price = 100
+        self.pandemic_time = 0
 
+    def __lt__(self, other):
+        return self.population > other.population
     def save_to_json(self):
         return {"name": str(self.name), "data": {"population": self.population, "food": self.food, "goods": self.goods}}
 
@@ -438,7 +438,10 @@ class Building(MapObject):
 
     def collect_statistics(self):
         self.statistics["population"].append(self.population)
-        for key, value in self.storage.__dict__.items():
+        self.statistics["wheat_price"].append(self.wheat_price)
+        params = ["sheep", "wheat", "barley", "goods", "pigs"]
+        for key in params:
+            value = self.storage[key]
             if self.statistics.get(key):
                 self.statistics[key].append(value)
             else:
@@ -451,18 +454,45 @@ class Building(MapObject):
         self.produce(fertiliy_coef)
         self.calculate_prestige()
         try:
-            self.storage.consume_production({'wheat': self.population *40, 'barley': self.population * 10})
+            self.storage.consume_production({'wheat': self.population * 3.2, 'barley': self.population * 3.2})
+            # self.storage.consume_production({"pigs": self.population * 20})
         except ValueError as e:
             self.population -=10
+            if self.population_coef > 1:
+                self.population_coef = 1
         self.population = int(
             self.population - self.population * (0.5 * pandemic_severity * random.triangular(0.8, 0.9, 1.1)))
-        self.population += 5
+        if pandemic_severity > 0:
+            self.pandemic_time += 10
+        if not self.pandemic_time:
+            self.population += random.randint(0, 5)
+        else:
+
+            self.population += random.randint(-5, 7)
+        self.expand()
+        self.calculate_price()
         self.collect_statistics()
+
+    def calculate_price(self):
+        try:
+            price_change = self.storage.last_year_consume["wheat"] / self.storage.last_year_prod["wheat"]
+        except ZeroDivisionError:
+            price_change = 1
+        self.wheat_price *= price_change
+        if self.wheat_price < 70:
+            self.wheat_price = 70 + random.uniform(1, 10)
+        if self.wheat_price > 250:
+            self.wheat_price = 250 - random.uniform(1, 50)
+        if self.wheat_price < 100:
+            self.wheat_price = self.wheat_price + random.uniform(-10, 30)
+
+
+    def expand(self):
+        pass
     def produce(self, fertility_coef ):
         print("produce")
         pass
     def migrate(self):
-        print("migrate")
         pass
     def change_visualization_parameter(self, parameter: str):
         self.parameter_for_visualisation = parameter
@@ -507,18 +537,32 @@ class ProductionStorage:
     wheat: int
     barley: int
     goods: int
+    def __init__(self,sheep=0, pigs=0, wheat=0, barley=0, goods=0):
+        self.sheep = int(sheep)
+        self.pigs = int(pigs)
+        self.wheat = int(wheat)
+        self.barley = int(barley)
+        self.goods = int(goods)
+        self.last_year_prod= {"sheep": 0, "wheat": 0, "barley": 0, "goods": 0}
+        self.last_year_consume = {"sheep": 0, "wheat": 0, "barley": 0, "goods": 0}
     def __getitem__(self, item):
         return self.__dict__.get(item)
     def __setitem__(self, key, value):
         self.__dict__[key] = value
     def add_production(self, production:dict):
 
+        self.last_year_prod = {"sheep": 0, "wheat": 0, "barley": 0, "goods": 0}
+        self.last_year_prod.update(production)
         for key, value in production.items():
             if self[key]:
                 self[key] += int (value)
             else:
                 self[key] = int(value)
-    def consume_production(self, production:dict):
+    def consume_production(self, production:dict, refresh=False):
+        if refresh:
+            self.last_year_consume= {"sheep": 0, "wheat": 0, "barley": 0, "goods": 0}
+        self.last_year_consume.update(production)
+
         for key, value in production.items():
             if self[key] and self[key] >= int(value):
                 self[key] -= int(value)
@@ -532,6 +576,7 @@ class TerritoryHandler:
         self.territories = []
         self.wheat_mods = ('wheat', 'barley', 'rest')
         self.next_mod = queue.Queue()
+        self.tile_limit = len(self.available_territories)
         [self.next_mod.put(mod) for mod in self.wheat_mods]
 
     def append(self, hex: Hexagon):
@@ -540,20 +585,37 @@ class TerritoryHandler:
             self.next_mod.put(mod)
             hex.change_mod(mod)
         self.territories.append(hex)
+    def calculate_wheat_tiles(self):
+
+        counter = 0
+        for hexagon in self.territories:
+            if isinstance(hexagon, HexagonWheat):
+                counter += 1
+        return counter
+
+    def set_tile_limit(self, tile_limit):
+        print("try to set tile limit", tile_limit)
+        if self.tile_limit > tile_limit:
+            self.tile_limit = tile_limit
+            print("set tile limit", self.tile_limit)
 
     def get_free_hex(self) -> Hexagon | None:
-        if self.available_territories:
+        if self.available_territories and self.tile_limit > 0:
             hex_to_change = random.choice(self.available_territories)
             self.available_territories.remove(hex_to_change)
+            self.tile_limit -= 1
+            print(self.tile_limit, "this is tile limit")
             return hex_to_change
         return None
-    def produce(self, fertlity_coef):
-        production = ProductionStorage(sheep=0, pigs=0, wheat=0, barley=0, goods=0)
+    def produce(self, fertlity_coef, population_for_hex: float):
+        production = ProductionStorage(sheep=2, pigs=0, wheat=0, barley=0, goods=0)
         for hexagon in self.territories:
             if isinstance(hexagon, ProducingHexagon):
-                result_prod = hexagon.produce(fertlity_coef)
+                result_prod = hexagon.produce(fertlity_coef, population_for_hex)
                 production.add_production(result_prod)
-        return production.__dict__
+        production =  {"sheep": production.sheep, "wheat": production.wheat, "barley": production.barley, "goods": production.goods}
+
+        return production
 
 
 class Village(Building):
@@ -568,18 +630,33 @@ class Village(Building):
         self.controlled_territories = []
         self.territory_handler = None
         self._prestige = 1
+
         if not loading:
             self.initialize()
             self.create_initial_territories()
 
+    def expand(self):
+        wheat_hexes = self.territory_handler.calculate_wheat_tiles()
+        if self.population > ( wheat_hexes) * 30 +  2 * wheat_hexes:
+            hex_to_change = self.territory_handler.get_free_hex()
+            if hex_to_change:
+                hex_created = self.game_map.change_hex("HexagonWheat", hex_to_change.grid_pos)
+                self.territory_handler.append(hex_created)
+
+
+
     def generate_parameters(self):
-        self.population = random.randint(50, 360)
+        self.population = int(random.triangular(50, 120, 320))
         self.forest_area = random.randint(25, 149)
         self.pastures_area = random.randint(25, 149)
 
     def initialize(self):
+
         hexes_in_range = self.game_map.coordinate_range(self.game_map.hexes[self.grid_pos], 2)
         self.territory_handler = TerritoryHandler(hexes_in_range)
+
+        available_hexes = random.randint(1, 5)
+        self.territory_handler.set_tile_limit(available_hexes)
     def set_nearest_town(self, nearest_town):
         self.nearest_town = nearest_town
     def save_to_json(self):
@@ -587,10 +664,11 @@ class Village(Building):
         save_dict['data']['territories'] = [hex.grid_pos for hex in self.territory_handler.territories]
         return save_dict
     def migrate(self):
-        prestige_diff = self.nearest_town._prestige - self._prestige
-        population_diff = self.population  * (prestige_diff / 2 )
-        self.population -= population_diff
-        self.nearest_town.population += population_diff
+        pass
+        # prestige_diff = self.nearest_town._prestige - self._prestige
+        # population_diff = self.population  * (prestige_diff / 2 )
+        # self.population -= population_diff
+        # self.nearest_town.population += population_diff
 
 
     def draw(self):
@@ -600,7 +678,7 @@ class Village(Building):
         self.draw_parameter_for_visualisation()
 
     def create_initial_territories(self):
-        crops_phields = max(12, min(3, math.ceil(self.population / 30)))
+        crops_phields =  math.ceil(self.population / 30)
         for i in range(crops_phields):
             hex_to_change = self.territory_handler.get_free_hex()
             hex_created = self.game_map.change_hex("HexagonWheat", hex_to_change.grid_pos)
@@ -616,8 +694,11 @@ class Village(Building):
             hex_created = self.game_map.change_hex("HexagonSheep", hex_to_change.grid_pos)
             self.territory_handler.append(hex_created)
 
+        available_hexes = random.randint(1, 5)
+        self.territory_handler.set_tile_limit(available_hexes)
     def produce(self, fertility_coef):
-        self.storage.add_production(self.territory_handler.produce( fertility_coef))
+        population_for_hex = self.population/ self.territory_handler.calculate_wheat_tiles()
+        self.storage.add_production(self.territory_handler.produce( fertility_coef, population_for_hex))
         self.send_to_city()
 
     def calculate_prestige(self):
@@ -625,10 +706,12 @@ class Village(Building):
 
     def send_to_city(self):
         trade = {}
-        for key in ["sheep", "pigs", "wheat", "barley"]:
+        for key in ["sheep", "wheat", "barley"]:
                 trade.update({key: self.storage[key] /5})
-        self.storage.consume_production(trade)
-        print(self.nearest_town, "this is nearest")
+        try:
+            self.storage.consume_production(trade)
+        except ValueError as e:
+            print(e)
         self.nearest_town.storage.add_production(trade)
 
 

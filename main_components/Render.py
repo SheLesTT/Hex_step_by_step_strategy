@@ -9,6 +9,7 @@ class Render:
         self.user_interface = user_interface
         self.internal_surface = pygame.Surface(internal_surface_size, pygame.SRCALPHA)
         self.display_surface = pygame.display.get_surface()
+        self.display_surface.fill((0,0,23))
         self.internal_surface_rect = self.internal_surface.get_rect(
             center=(self.display_surface.get_size()[0] // 2, self.display_surface.get_size()[1] // 2))
 

@@ -60,7 +60,7 @@ class SimUI(UI):
         self.add_element(0,button_list)
     def speed_up(self):
         with open("speed.txt", "w") as file:
-            if self.curren_speed < 16:
+            if self.curren_speed < 32:
                 self.curren_speed *= 2
             file.write(str(self.curren_speed))
     def slow_down(self):

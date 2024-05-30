@@ -55,9 +55,9 @@ class EditorUI(UI):
 
     def add_editor_mods_list(self):
         button_list = ButtonList(position=(0, 0), name="editor_mods")
-        elements_to_choose = ["Hexes", "Towns", "Roads", "Buildings", "None"]
+        elements_to_choose = ["Hexes", "Rivers", "Roads", "Buildings", "None"]
         button_texts = ["Гексы", "Реки", "Дороги", "Здания", "Параметры"]
-        [button_list.add_element(mode, mode) for texts, mode in zip(button_texts, elements_to_choose)]
+        [button_list.add_element(texts, mode) for texts, mode in zip(button_texts, elements_to_choose)]
         button_list.elements_list[1].add_action(self.close_hexes_list, action_args=())
         button_list.elements_list[2].add_action(self.close_hexes_list, action_args=())
         button_list.elements_list[4].add_action(self.close_hexes_list, action_args=())
